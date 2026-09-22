@@ -67,5 +67,5 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "Atv Teste Unity.slnx"
+    "dotnet.defaultSolution": "JogoMassa.slnx"
 }
