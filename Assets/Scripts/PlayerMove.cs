@@ -6,6 +6,8 @@ public class PlayerMove : MonoBehaviour
     [Header("Movimento")]
     [SerializeField] private float speed = 5f;
     [SerializeField] private float rotationSpeed = 10f;
+    [SerializeField] private Transform cameraTransform;
+
  
     [Header("Pulo")]
     [SerializeField] private float jumpForce = 7f;
@@ -15,6 +17,8 @@ public class PlayerMove : MonoBehaviour
     [SerializeField] private float dashSpeed = 20f;
     [SerializeField] private float dashDuration = 0.15f;
     [SerializeField] private float dashCooldown = 0.8f;
+
+    
  
     private Rigidbody rb;
  
@@ -93,36 +97,52 @@ public class PlayerMove : MonoBehaviour
         }
     }
  
+
+ private Vector3 GetCameraDirection()
+{
+    Vector3 cameraForward = cameraTransform.forward;
+    Vector3 cameraRight = cameraTransform.right;
+
+    cameraForward.y = 0f;
+    cameraRight.y = 0f;
+
+    cameraForward.Normalize();
+    cameraRight.Normalize();
+
+    Vector3 direction =
+        cameraRight * moveInput.x +
+        cameraForward * moveInput.y;
+
+    return direction.normalized;
+}
+
     private void Move()
+{
+    Vector3 direction = GetCameraDirection();
+
+    Vector3 velocity = rb.linearVelocity;
+
+    velocity.x = direction.x * speed;
+    velocity.z = direction.z * speed;
+
+    rb.linearVelocity = velocity;
+
+    if (direction.sqrMagnitude > 0.01f)
     {
-        Vector3 direction = new Vector3(
-            moveInput.x,
-            0f,
-            moveInput.y
+        Quaternion targetRotation =
+            Quaternion.LookRotation(direction);
+
+        rb.MoveRotation(
+            Quaternion.Slerp(
+                rb.rotation,
+                targetRotation,
+                rotationSpeed * Time.fixedDeltaTime
+            )
         );
- 
-        Vector3 velocity = rb.linearVelocity;
- 
-        velocity.x = direction.x * speed;
-        velocity.z = direction.z * speed;
- 
-        rb.linearVelocity = velocity;
- 
-        // Rotaciona o personagem
-        if (direction.sqrMagnitude > 0.01f)
-        {
-            Quaternion targetRotation =
-                Quaternion.LookRotation(direction);
- 
-            rb.MoveRotation(
-                Quaternion.Slerp(
-                    rb.rotation,
-                    targetRotation,
-                    rotationSpeed * Time.fixedDeltaTime
-                )
-            );
-        }
     }
+}
+
+
  
  
     private void Jump()
@@ -154,33 +174,26 @@ public class PlayerMove : MonoBehaviour
   
  
     private void StartDash()
+{
+    if (Time.time < lastDashTime + dashCooldown)
+        return;
+
+    Vector3 direction = GetCameraDirection();
+
+    if (direction.sqrMagnitude < 0.01f)
     {
-        if (Time.time < lastDashTime + dashCooldown)
-            return;
- 
-        // Direção do movimento
-        Vector3 direction = new Vector3(
-            moveInput.x,
-            0f,
-            moveInput.y
-        );
- 
-        if (direction.sqrMagnitude < 0.01f)
-        {
-            direction = transform.forward;
-        }
- 
-        dashDirection = direction.normalized;
- 
-        isDashing = true;
- 
-        dashTimer = dashDuration;
- 
-        lastDashTime = Time.time;
- 
-   
-        rb.linearVelocity = Vector3.zero;
+        direction = transform.forward;
     }
+
+    dashDirection = direction;
+
+    isDashing = true;
+    dashTimer = dashDuration;
+    lastDashTime = Time.time;
+
+    rb.linearVelocity = Vector3.zero;
+}
+
  
     private void Dash()
     {
