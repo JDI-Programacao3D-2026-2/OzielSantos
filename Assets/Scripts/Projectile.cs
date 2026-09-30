@@ -1,34 +1,68 @@
+using System;
 using UnityEngine;
 
-public class Projectile : MonoBehaviour
+namespace Game.Combat
 {
-    public float speed = 10f;
-    private Vector3 direction;
-    private ShootPool Shootpool;
 
-    void Awake()
+   /// Contrato para qualquer alvo que possa receber dano de um Projectile.
+
+    public interface IDamageable
     {
-        Invoke("SpawnTime", 5f);
+        void TakeDamage(float amount);
     }
 
-    public void StartProjectile(Vector3 direction, ShootPool shooter)
-    {
-        this.direction = direction;
-        this.Shootpool = shooter;
-    }
-    // Update is called once per frame
-    void Update()
-    {
-        transform.position += direction * speed * Time.deltaTime;
-    }
 
-    void OnCollisionEnter(Collision collision)
-    {
-        Shootpool.ReturnProjectile(gameObject);
-    }
+    /// Projétil físico (Rigidbody) reaproveitável pelo pool do WeaponPlayer. A arma chama Launch()
+    /// logo após reativar a instância; o próprio projétil pede pra ser devolvido ao expirar ou acertar algo.
 
-    void SpawnTime()
+    [RequireComponent(typeof(Rigidbody))]
+    [RequireComponent(typeof(Collider))]
+    public class Projectile : MonoBehaviour
     {
-        Shootpool.ReturnProjectile(gameObject);
+        private Rigidbody _rigidbody;
+        private float _damage;
+        private float _lifetime;
+        private float _elapsedTime;
+        private Action<Projectile> _releaseToPool;
+
+        private void Awake()
+        {
+            _rigidbody = GetComponent<Rigidbody>();
+            _rigidbody.useGravity = false;
+            GetComponent<Collider>().isTrigger = true;
+        }
+
+        public void Launch(Vector3 direction, float speed, float damage, float lifetime, Action<Projectile> releaseToPool)
+        {
+            _damage = damage;
+            _lifetime = lifetime;
+            _elapsedTime = 0f;
+            _releaseToPool = releaseToPool ?? throw new ArgumentNullException(nameof(releaseToPool));
+
+            transform.rotation = Quaternion.LookRotation(direction);
+            _rigidbody.linearVelocity = direction.normalized * speed;
+        }
+
+        private void Update()
+        {
+            _elapsedTime += Time.deltaTime;
+            if (_elapsedTime >= _lifetime)
+                Release();
+        }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            if (other.TryGetComponent(out IDamageable damageable))
+                damageable.TakeDamage(_damage);
+
+            Release();
+        }
+
+        private void Release()
+        {
+            _rigidbody.linearVelocity = Vector3.zero;
+            gameObject.SetActive(false);
+            _releaseToPool?.Invoke(this);
+        }
     }
 }

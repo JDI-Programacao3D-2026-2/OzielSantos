@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1aa71338dd448264c96bd6cf392f7329, type: 3}
+  m_Name: ProjectileData
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Combat.WeaponData
+  fireRate: 5
+  damage: 10
+  projectilePrefab: {fileID: 6905227115246213273, guid: da110b3b83389b14d934e5992cdb85ab, type: 3}
+  projectileSpeed: 60
+  projectileLifetime: 4
