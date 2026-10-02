@@ -67,5 +67,5 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "OzielSantos.slnx"
+    "dotnet.defaultSolution": "Atv Teste Unity.slnx"
 }
