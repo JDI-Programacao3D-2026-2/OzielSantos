@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using TMPro;
 
 namespace Game.Combat
 {
@@ -28,6 +29,7 @@ namespace Game.Combat
         [SerializeField, Min(0.01f)] private float projectileSpeed = 30f;
         [SerializeField, Min(0.01f)] private float projectileLifetime = 4f;
         [SerializeField, Min(0.01f)] private float attackCooldown = 1.5f;
+        [SerializeField] TextMeshProUGUI label;
 
         private NavMeshAgent _agent;
         private readonly Queue<Projectile> _pooledProjectiles = new Queue<Projectile>();
@@ -145,6 +147,8 @@ namespace Game.Combat
         {
             _agent.isStopped = true;
             // Troque por animação/drop/pool depois; por enquanto remove o objeto.
+            label.gameObject.SetActive(true);
+            label.text = "Você venceu!";
             Destroy(gameObject);
         }
 
