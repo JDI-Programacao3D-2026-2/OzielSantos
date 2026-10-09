@@ -75,7 +75,7 @@ public class EnemyNavMesh : MonoBehaviour
              } 
              
         float distanceToPlayer = Vector3.Distance(transform.position, player.position);
-        
+
         if (distanceToPlayer > losePlayerDistance) 
         { 
             ChangeState(EnemyState.WayPatrol);
