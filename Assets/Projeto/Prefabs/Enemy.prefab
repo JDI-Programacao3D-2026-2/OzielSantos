@@ -373,20 +373,16 @@ MonoBehaviour:
   hp: 100
   maxHp: 100
   hpFuga: 30
-  player: {fileID: 0}
+  player: {fileID: 2851709138082193375, guid: 22e1d3f69784b2041876104ee3976eb5, type: 3}
   agent: {fileID: 5528471880476074483}
-  waypoints:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  waypoints: []
   layerMask:
     serializedVersion: 2
     m_Bits: 8
   losePlayerDistance: 15
   distanciaFuga: 10
   distanciaEscolhaFuga: 8
-  currentState: 0
+  currentState: 1
 --- !u!114 &6639222081620569984
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -407,7 +403,7 @@ MonoBehaviour:
   layerMask:
     serializedVersion: 2
     m_Bits: 8
-  player: {fileID: 0}
+  player: {fileID: 2851709138082193375, guid: 22e1d3f69784b2041876104ee3976eb5, type: 3}
 --- !u!1 &4326801235516134311
 GameObject:
   m_ObjectHideFlags: 0
