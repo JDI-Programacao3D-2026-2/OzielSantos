@@ -27,26 +27,29 @@ public class Projectile : MonoBehaviour
     }
 
     void OnCollisionEnter(Collision collision)
+{
+    CancelInvoke(nameof(SpawnTime));
+
+    // Procura o Knockback no objeto atingido ou nos pais.
+    Knockback alvo = collision.collider.GetComponentInParent<Knockback>();
+
+    if (alvo != null)
     {
-        CancelInvoke(nameof(SpawnTime));
+        Debug.Log("Projétil acertou " + alvo.name);
 
-        EnemyNavMesh inimigo =
-            collision.collider.GetComponentInParent<EnemyNavMesh>();
-
-        if (inimigo != null)
-        {
-            inimigo.TakeDamage(dano);
-        }
-
-        if (Shootpool != null)
-        {
-            Shootpool.ReturnProjectile(gameObject);
-        }
-        else
-        {
-            gameObject.SetActive(false);
-        }
+        alvo.ReceberAtaque(dano, direction, 0f);
     }
+    else
+    {
+        Debug.Log("Projétil acertou " + collision.collider.name
+            + ", mas não encontrou Knockback.");
+    }
+
+    if (Shootpool != null)
+        Shootpool.ReturnProjectile(gameObject);
+    else
+        gameObject.SetActive(false);
+}
 
     void SpawnTime()
     {

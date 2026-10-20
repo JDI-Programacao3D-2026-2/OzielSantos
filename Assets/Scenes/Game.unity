@@ -376,7 +376,7 @@ MonoBehaviour:
     cor:
       serializedVersion: 2
       rgba: 16774656
-    prefab: {fileID: 665224862139990211, guid: 22e1d3f69784b2041876104ee3976eb5, type: 3}
+    prefab: {fileID: 665224862139990211, guid: 863c0be59c6ba644e8ba5fb42362639e, type: 3}
     piso: 2
   construirNavMesh: 1
   aoTerminarDeGerar:

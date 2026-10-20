@@ -34,10 +34,10 @@ public class ShootPool : MonoBehaviour
 
     void Update()
     {   
-        if(isEnemy && canShoot && Time.time >= nextFireTime)
-        {           
-            Shoot();
-            nextFireTime = Time.time + fireRate;
+        if (isEnemy && canShoot)
+        {
+            // O EnemyNavMesh controla quando o inimigo pode atirar.
+            // Não dispare automaticamente aqui.
         }
 
         if (isEnemy && currentAmmo <= 0 && !IsInvoking("Reload"))
@@ -66,16 +66,28 @@ void FixedUpdate()
       Debug.DrawLine(transform.position, transform.position + transform.forward * 100f, Color.red);
 }
 }
-    void Shoot()
-    {
+    
+public void Shoot()
+{
     if (currentAmmo <= 0 || activeProjectiles >= poolSize)
-            return;
-        GameObject projectile = pool.Get();
-        currentAmmo--;
-        activeProjectiles++;
-        projectile.transform.SetPositionAndRotation(firePoint.position, firePoint.rotation);
-        projectile.GetComponent<Projectile>().StartProjectile(firePoint.forward, this);
-    }
+        return;
+
+    GameObject projectile = pool.Get();
+
+    currentAmmo--;
+    activeProjectiles++;
+
+    projectile.transform.SetPositionAndRotation(
+        firePoint.position,
+        firePoint.rotation
+    );
+
+    projectile.GetComponent<Projectile>().StartProjectile(
+        firePoint.forward,
+        this
+    );
+}
+
 
     public void ReturnProjectile(GameObject projectile)
     {

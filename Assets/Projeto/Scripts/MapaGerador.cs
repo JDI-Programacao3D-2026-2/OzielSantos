@@ -253,7 +253,14 @@ public class MapaGerador : MonoBehaviour
         // Player fica fora da combinação acima (ele se move, não pode ser "assado" junto com o mapa)
         if (posicaoPlayer.HasValue)
         {
-            PlayerInstanciado = Instantiate(player.prefab);
+            PersonagemData escolhido = SelecaoPersonagem.PersonagemEscolhido;
+
+            GameObject prefabEscolhido =
+                escolhido != null && escolhido.prefab != null
+                ? escolhido.prefab
+                : player.prefab;
+
+            PlayerInstanciado = Instantiate(prefabEscolhido);
 
             // Desliga o CharacterController antes de teleportar e religa depois — mover o
             // Transform direto com o controller ligado deixa o estado interno dele (chão,

@@ -2,13 +2,24 @@
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Events;
+using System.Collections;
 
 public class EnemyNavMesh : MonoBehaviour
 {
-    [Header("Status")]
-    [SerializeField] private int hp = 100;
-    [SerializeField] private int maxHp = 100;
-    [SerializeField] private int hpFuga = 30;
+    public enum TipoCombate
+    {
+        Distancia,
+        CorpoACorpo
+    }
+
+    [Header("Tipo de combate")]
+    public TipoCombate tipoCombate = TipoCombate.Distancia;
+
+    [Header("Fuga por vida")]
+    [SerializeField, Range(0f, 1f)]
+    private float porcentagemVidaFuga = 0.3f;
+
+    private Knockback vidaInimigo;
 
     [Header("Referências")]
     private Transform player;
@@ -28,6 +39,8 @@ public class EnemyNavMesh : MonoBehaviour
     [Header("Combate")]
     public float distanciaAtaque = 6f;
     public float intervaloTiro = 1.5f;
+    private bool podeAtirar = true;
+    private Coroutine rotinaDisparo;
     public UnityEvent aoAtirar;
 
     [Header("Patrulha")]
@@ -83,6 +96,8 @@ public class EnemyNavMesh : MonoBehaviour
 }
     void Start()
     {
+        vidaInimigo = GetComponent<Knockback>();
+
         if (agent == null)
             agent = GetComponent<NavMeshAgent>();
 
@@ -118,69 +133,74 @@ public class EnemyNavMesh : MonoBehaviour
             ChangeState(EnemyState.RandomPatrol);
     }
 
-    void Update()
+    
+void Update()
+{
+    BuscarPlayer();
+
+    if (agent == null || !agent.enabled || !agent.isOnNavMesh)
+        return;
+
+    // A fuga por vida tem prioridade sobre os outros estados.
+    if (DeveFugir())
     {
-        BuscarPlayer();
-
-        if (agent == null || !agent.enabled || !agent.isOnNavMesh)
-            return;
-
-        // Procura o jogador caso ainda não tenha referência.
-        if (player == null)
-        {
-            BuscarPlayer();
-        }
-        else if (currentState != EnemyState.Flee)
-        {
-            float distanciaPlayer = Vector3.Distance(
-                transform.position,
-                player.position
-            );
-
-            if (hp <= hpFuga)
-            {
-                ChangeState(EnemyState.Flee);
-            }
-            else if (distanciaPlayer <= distanciaVisao)
-            {
-                if (distanciaPlayer <= distanciaAtaque)
-                {
-                    ChangeState(EnemyState.Attack);
-                }
-                else
-                {
-                    ChangeState(EnemyState.Pursuit);
-                }
-            }
-        }
-
-        // Foge automaticamente quando a vida fica baixa.
-        if (hp <= hpFuga && currentState != EnemyState.Flee)
+        if (currentState != EnemyState.Flee)
             ChangeState(EnemyState.Flee);
+    }
+    else if (player != null && currentState != EnemyState.Flee)
+    {
+        float distanciaPlayer = Vector3.Distance(
+            transform.position,
+            player.position
+        );
 
-        switch (currentState)
+        if (distanciaPlayer <= distanciaVisao)
         {
-            case EnemyState.WayPatrol:
-                WayPatrol();
-                break;
+            float distanciaNecessaria =
+                tipoCombate == TipoCombate.CorpoACorpo
+                ? 2f
+                : distanciaAtaque;
 
-            case EnemyState.RandomPatrol:
-                RandomPatrol();
-                break;
-
-            case EnemyState.Pursuit:
-                Pursuit();
-                break;
-
-            case EnemyState.Attack:
-                Attack();
-                break;
-
-            case EnemyState.Flee:
-                Flee();
-                break;
+            if (distanciaPlayer <= distanciaNecessaria)
+                ChangeState(EnemyState.Attack);
+            else
+                ChangeState(EnemyState.Pursuit);
         }
     }
+
+    switch (currentState)
+    {
+        case EnemyState.WayPatrol:
+            WayPatrol();
+            break;
+
+        case EnemyState.RandomPatrol:
+            RandomPatrol();
+            break;
+
+        case EnemyState.Pursuit:
+            Pursuit();
+            break;
+
+        case EnemyState.Attack:
+            Attack();
+            break;
+
+        case EnemyState.Flee:
+            Flee();
+            break;
+    }
+}
+
+
+    bool DeveFugir()
+{
+    if (vidaInimigo == null)
+        return false;
+
+    return vidaInimigo.vida <=
+        vidaInimigo.vidaMaxima * porcentagemVidaFuga;
+}
 
     public void ChangeState(EnemyState newState)
     {
@@ -202,7 +222,14 @@ public class EnemyNavMesh : MonoBehaviour
         }
     }
 
-    
+
+float ObterDistanciaDeAtaque()
+{
+    return tipoCombate == TipoCombate.CorpoACorpo
+        ? 2f
+        : distanciaAtaque;
+}
+
 bool DetectarPlayer()
 {
     if (player == null)
@@ -342,7 +369,6 @@ bool DetectarPlayer()
         );
     }
 
-    
 
 
 void Pursuit()
@@ -354,56 +380,62 @@ void Pursuit()
     }
 
     if (!agent.isActiveAndEnabled || !agent.isOnNavMesh)
-    {
-        Debug.LogWarning(name + ": agente fora do NavMesh!");
         return;
-    }
 
-    float distancia = Vector3.Distance(
-        transform.position,
-        player.position
-    );
+    // Ignora a diferença de altura entre os pivôs.
+    Vector3 posInimigo = transform.position;
+    Vector3 posPlayer = player.position;
+    posInimigo.y = 0f;
+    posPlayer.y = 0f;
 
-    if (distancia <= distanciaAtaque)
+    float distancia = Vector3.Distance(posInimigo, posPlayer);
+
+    float distanciaNecessaria =
+        tipoCombate == TipoCombate.CorpoACorpo
+        ? 1.2f
+        : distanciaAtaque;
+
+    if (distancia <= distanciaNecessaria)
     {
         ChangeState(EnemyState.Attack);
         return;
     }
 
     agent.isStopped = false;
-    agent.stoppingDistance = distanciaAtaque * 0.8f;
 
-    // Procura um ponto navegável perto do jogador.
+    // Permite chegar bem perto do destino.
+    agent.stoppingDistance = 0f;
+    agent.autoBraking = true;
+
+    // Atualiza o destino somente quando necessário.
     if (NavMesh.SamplePosition(
-    player.position,
-    out NavMeshHit hit,
-    10f,
-    NavMesh.AllAreas))
-{
-    Debug.Log(
-        "NavMesh encontrado! Player: " + player.position +
-        " | Ponto encontrado: " + hit.position
-    );
-
-    agent.SetDestination(hit.position);
-}
-else
-{
-    Debug.LogError(
-        "Não existe NavMesh num raio de 10 metros do jogador! " +
-        "Posição do jogador: " + player.position
-    );
-}
-
-    Debug.DrawLine(
-        transform.position,
         player.position,
-        Color.yellow
-    );
+        out NavMeshHit hit,
+        10f,
+        NavMesh.AllAreas))
+    {
+        if (!agent.hasPath ||
+            Vector3.Distance(agent.destination, hit.position) > 0.5f)
+        {
+            agent.SetDestination(hit.position);
+        }
+    }
+
+    Debug.DrawLine(transform.position, player.position, Color.yellow);
 }
 
+    IEnumerator DispararComIntervalo()
+    {
+        podeAtirar = false;
 
+        aoAtirar?.Invoke();
 
+        Debug.Log(name + " disparou. Aguardando " + intervaloTiro + " segundos.");
+
+        yield return new WaitForSeconds(intervaloTiro);
+
+        podeAtirar = true;
+    }
 
     void Attack()
     {
@@ -424,6 +456,17 @@ else
             return;
         }
 
+        float distanciaNecessaria =
+            tipoCombate == TipoCombate.CorpoACorpo
+            ? 3f
+            : distanciaAtaque;
+
+            if (distancia > distanciaNecessaria)
+            {
+                ChangeState(EnemyState.Pursuit);
+                return;
+            }
+
         agent.isStopped = true;
 
         // Gira apenas no eixo horizontal.
@@ -441,10 +484,20 @@ else
             );
         }
 
-        if (Time.time >= proximoTiro)
+        
+        if (tipoCombate == TipoCombate.Distancia)
         {
-            aoAtirar?.Invoke();
-            proximoTiro = Time.time + intervaloTiro;
+            if (podeAtirar)
+            {
+                rotinaDisparo = StartCoroutine(DispararComIntervalo());
+            }
+        }
+        else
+        {
+            EspadachimAtaque ataque = GetComponent<EspadachimAtaque>();
+
+            if (ataque != null)
+                ataque.TentarAtacar();
         }
     }
 
@@ -513,30 +566,35 @@ else
                 aliado.transform.position
             );
 
-            if (distancia < 10f && aliado.hp > aliado.hpFuga)
+            if (distancia < 10f && !aliado.DeveFugir())
                 aliado.ChangeState(EnemyState.Pursuit);
         }
     }
 
     public void TakeDamage(int dano)
+{
+    if (vidaInimigo == null)
+        vidaInimigo = GetComponent<Knockback>();
+
+    if (vidaInimigo == null)
     {
-        hp = Mathf.Clamp(hp - dano, 0, maxHp);
-
-        Debug.Log(name + " recebeu " + dano +
-                  " de dano. HP: " + hp);
-
-        if (hp <= 0)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        if (hp <= hpFuga)
-            ChangeState(EnemyState.Flee);
-        else if (player != null)
-        {
-            ChangeState(EnemyState.Pursuit);
-            CallBackup();
-        }
+        Debug.LogError(name + ": não possui InimigoKnockback!");
+        return;
     }
+
+    vidaInimigo.ReceberAtaque(dano, Vector3.zero, 0f);
+
+    if (vidaInimigo.vida <= 0)
+        return;
+
+    if (DeveFugir())
+    {
+        ChangeState(EnemyState.Flee);
+    }
+    else
+    {
+        ChangeState(EnemyState.Pursuit);
+        CallBackup();
+    }
+}
 }

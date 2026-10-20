@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 469aba0ee263a4a4e919e614f1cb6564
+guid: 1554956d89a112a41a585c0a4db45c35
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - VCR OSD Mono
+  - Inconsolata
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0
