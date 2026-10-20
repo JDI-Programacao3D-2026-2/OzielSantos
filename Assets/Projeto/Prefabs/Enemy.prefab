@@ -373,13 +373,24 @@ MonoBehaviour:
   hp: 100
   maxHp: 100
   hpFuga: 30
-  player: {fileID: 2851709138082193375, guid: 22e1d3f69784b2041876104ee3976eb5, type: 3}
+  player: {fileID: 0}
   agent: {fileID: 5528471880476074483}
   waypoints: []
-  layerMask:
+  distanciaVisao: 15
+  anguloVisao: 120
+  alturaOlhos: 1.5
+  obstaculos:
     serializedVersion: 2
-    m_Bits: 8
-  losePlayerDistance: 15
+    m_Bits: 128
+  distanciaAtaque: 6
+  intervaloTiro: 1.5
+  aoAtirar:
+    m_PersistentCalls:
+      m_Calls: []
+  raioPatrulha: 10
+  distanciaDestino: 1
+  tempoMinimoPatrulha: 2
+  tempoMaximoPatrulha: 5
   distanciaFuga: 10
   distanciaEscolhaFuga: 8
   currentState: 1

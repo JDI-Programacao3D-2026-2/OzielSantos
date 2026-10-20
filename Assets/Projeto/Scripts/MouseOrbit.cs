@@ -3,60 +3,45 @@ using UnityEngine.InputSystem;
 
 public class MouseOrbit : MonoBehaviour
 {
+    [Header("Referências")]
     public Transform player;
-    public float distance = 5f;
-    public float MouseSensitivity = 0.2f;
-    private float rotX;
-    private float rotY;
 
-void Start()
+    [Header("Configurações")]
+    public float MouseSensitivity = 0.2f;
+    public float rotY = 45f;
+    public float rotX = 0f;
+
+    [Header("Limites verticais")]
+    public float minAngle = 30f;
+    public float maxAngle = 60f;
+
+    void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
-    }
-    void LateUpdate()
-    {
-        if (player != null) {
-        Vector2 delta = Mouse.current.delta.ReadValue() * MouseSensitivity;
-        rotX += delta.x;            
-        
-        rotY = Mathf.Clamp(rotY - delta.y,30,60);  
-        Quaternion rotation = Quaternion.Euler(rotY, rotX, 0);
-        transform.position = player.position - (rotation * Vector3.forward * distance);
-        transform.rotation = rotation;
+
+        if (player != null)
+        {
+            rotX = player.eulerAngles.y;
         }
     }
+
+    void LateUpdate()
+    {
+        if (player == null || Mouse.current == null)
+            return;
+
+        Vector2 delta = Mouse.current.delta.ReadValue()
+                        * MouseSensitivity;
+
+        rotX += delta.x;
+        rotY = Mathf.Clamp(
+            rotY - delta.y,
+            minAngle,
+            maxAngle
+        );
+
+        // A rotação horizontal acompanha o jogador.
+        player.rotation = Quaternion.Euler(0f, rotX, 0f);
+    }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//Mathf.Clamp(0,0,0);
-
-
-
-
-// rotY = Mathf.Clamp(rotY - delta.y, -30f, 60f);

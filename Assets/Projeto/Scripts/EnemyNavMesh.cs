@@ -1,6 +1,7 @@
 
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Events;
 
 public class EnemyNavMesh : MonoBehaviour
 {
@@ -9,55 +10,170 @@ public class EnemyNavMesh : MonoBehaviour
     [SerializeField] private int maxHp = 100;
     [SerializeField] private int hpFuga = 30;
 
-    public Transform player;
+    [Header("Referências")]
+    private Transform player;
+    private float proximaBuscaPlayer;
     public NavMeshAgent agent;
     public Transform[] waypoints;
-    public LayerMask layerMask;
 
-    [Header("Distâncias")]
-    public float losePlayerDistance = 15f;
+    [Header("Detecção")]
+    public float distanciaVisao = 15f;
+    [Range(0f, 360f)]
+    public float anguloVisao = 120f;
+    public float alturaOlhos = 1.5f;
+
+    [Tooltip("Camadas que bloqueiam a visão, como paredes.")]
+    public LayerMask obstaculos;
+
+    [Header("Combate")]
+    public float distanciaAtaque = 6f;
+    public float intervaloTiro = 1.5f;
+    public UnityEvent aoAtirar;
+
+    [Header("Patrulha")]
+    public float raioPatrulha = 10f;
+    public float distanciaDestino = 1f;
+    public float tempoMinimoPatrulha = 2f;
+    public float tempoMaximoPatrulha = 5f;
+
+    [Header("Fuga")]
     public float distanciaFuga = 10f;
     public float distanciaEscolhaFuga = 8f;
+
+    [Header("Estados")]
+    public EnemyState currentState = EnemyState.RandomPatrol;
 
     public enum EnemyState
     {
         WayPatrol,
         RandomPatrol,
         Pursuit,
+        Attack,
         Flee
     }
 
-    public EnemyState currentState = EnemyState.WayPatrol;
+    private Vector3 origemPatrulha;
+    private float proximaPatrulha;
+    private float proximoTiro;
+    private int waypointAtual = -1;
+    private bool destinoDefinido;
+
+
+    void BuscarPlayer()
+{
+    if (player != null)
+        return;
+
+    if (Time.time < proximaBuscaPlayer)
+        return;
+
+    proximaBuscaPlayer = Time.time + 0.5f;
+
+    GameObject encontrado =
+        GameObject.FindGameObjectWithTag("Player");
+
+    if (encontrado != null)
+    {
+        player = encontrado.transform;
+
+        Debug.Log(
+            name + ": encontrou o jogador " + encontrado.name
+        );
+    }
+}
+    void Start()
+    {
+        if (agent == null)
+            agent = GetComponent<NavMeshAgent>();
+
+        if (player == null)
+        {
+            GameObject encontrado = GameObject.FindGameObjectWithTag("Player");
+
+            if (encontrado != null)
+                player = encontrado.transform;
+        }
+
+        if (agent == null)
+        {
+            Debug.LogError(name + ": NavMeshAgent não encontrado!");
+            enabled = false;
+            return;
+        }
+
+        if (!agent.enabled || !agent.isOnNavMesh)
+        {
+            Debug.LogError(
+                name + ": agente desativado ou fora do NavMesh!"
+            );
+            enabled = false;
+            return;
+        }
+
+        origemPatrulha = transform.position;
+
+        if (waypoints != null && waypoints.Length > 0)
+            ChangeState(EnemyState.WayPatrol);
+        else
+            ChangeState(EnemyState.RandomPatrol);
+    }
 
     void Update()
     {
-        if (hp <= hpFuga && player != null)
+        BuscarPlayer();
+
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh)
+            return;
+
+        // Procura o jogador caso ainda não tenha referência.
+        if (player == null)
         {
-            ChangeState(EnemyState.Flee);
+            BuscarPlayer();
+        }
+        else if (currentState != EnemyState.Flee)
+        {
+            float distanciaPlayer = Vector3.Distance(
+                transform.position,
+                player.position
+            );
+
+            if (hp <= hpFuga)
+            {
+                ChangeState(EnemyState.Flee);
+            }
+            else if (distanciaPlayer <= distanciaVisao)
+            {
+                if (distanciaPlayer <= distanciaAtaque)
+                {
+                    ChangeState(EnemyState.Attack);
+                }
+                else
+                {
+                    ChangeState(EnemyState.Pursuit);
+                }
+            }
         }
 
-        FiniteStateMachine();
-    }
+        // Foge automaticamente quando a vida fica baixa.
+        if (hp <= hpFuga && currentState != EnemyState.Flee)
+            ChangeState(EnemyState.Flee);
 
-    public void ChangeState(EnemyState newState)
-    {
-        currentState = newState;
-    }
-
-    void FiniteStateMachine()
-    {
         switch (currentState)
         {
-            case EnemyState.Pursuit:
-                Pursuit();
-                break;
-
             case EnemyState.WayPatrol:
                 WayPatrol();
                 break;
 
             case EnemyState.RandomPatrol:
-                WayPatrol();
+                RandomPatrol();
+                break;
+
+            case EnemyState.Pursuit:
+                Pursuit();
+                break;
+
+            case EnemyState.Attack:
+                Attack();
                 break;
 
             case EnemyState.Flee:
@@ -66,40 +182,296 @@ public class EnemyNavMesh : MonoBehaviour
         }
     }
 
-    void Pursuit()
+    public void ChangeState(EnemyState newState)
     {
-        if(player != null){
-             agent.stoppingDistance = 6f;
-             agent.SetDestination(player.position);
-             transform.LookAt(player);
-             } 
-             
-        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+        if (currentState == newState)
+            return;
 
-        if (distanceToPlayer > losePlayerDistance) 
-        { 
-            ChangeState(EnemyState.WayPatrol);
+        currentState = newState;
+        destinoDefinido = false;
+
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh)
+            return;
+
+        agent.isStopped = false;
+
+        if (newState == EnemyState.Attack)
+        {
+            agent.ResetPath();
+            agent.isStopped = true;
+        }
+    }
+
+    
+bool DetectarPlayer()
+{
+    if (player == null)
+        return false;
+
+    Vector3 origem = transform.position + Vector3.up * alturaOlhos;
+    Vector3 alvo = player.position + Vector3.up;
+    Vector3 direcao = alvo - origem;
+
+    float distancia = direcao.magnitude;
+
+    if (distancia > distanciaVisao || distancia < 0.01f)
+        return false;
+
+    // Verifica o campo de visão horizontal.
+    Vector3 direcaoHorizontal = direcao;
+    direcaoHorizontal.y = 0f;
+
+    if (direcaoHorizontal.sqrMagnitude > 0.01f)
+    {
+        float angulo = Vector3.Angle(
+            transform.forward,
+            direcaoHorizontal
+        );
+
+        if (angulo > anguloVisao / 2f)
+            return false;
+    }
+
+    // Verifica se há obstáculos entre o inimigo e o jogador.
+    if (Physics.Raycast(
+        origem,
+        direcao.normalized,
+        out RaycastHit hit,
+        distancia,
+        ~obstaculos,
+        QueryTriggerInteraction.Ignore))
+    {
+        // O objeto atingido precisa ser o jogador ou um filho dele.
+        if (hit.transform == player ||
+            hit.transform.IsChildOf(player))
+        {
+            Debug.DrawLine(origem, hit.point, Color.green);
+            return true;
+        }
+
+        Debug.DrawLine(origem, hit.point, Color.red);
+        return false;
+    }
+
+    return false;
+}
+
+
+    void WayPatrol()
+    {
+        if (waypoints == null || waypoints.Length == 0)
+        {
+            ChangeState(EnemyState.RandomPatrol);
+            return;
+        }
+
+        agent.isStopped = false;
+        agent.stoppingDistance = 0f;
+
+        if (destinoDefinido &&
+            (agent.pathPending ||
+             agent.remainingDistance > distanciaDestino))
+            return;
+
+        // Escolhe um waypoint diferente do anterior.
+        int novoIndice = waypointAtual;
+
+        if (waypoints.Length > 1)
+        {
+            int tentativas = 0;
+
+            while (novoIndice == waypointAtual && tentativas < 10)
+            {
+                novoIndice = Random.Range(0, waypoints.Length);
+                tentativas++;
+            }
+        }
+        else
+        {
+            novoIndice = 0;
+        }
+
+        if (waypoints[novoIndice] == null)
+            return;
+
+        waypointAtual = novoIndice;
+
+        agent.SetDestination(waypoints[waypointAtual].position);
+        destinoDefinido = true;
+    }
+
+    void RandomPatrol()
+    {
+        agent.isStopped = false;
+        agent.stoppingDistance = 0f;
+
+        if (destinoDefinido &&
+            (agent.pathPending ||
+             agent.remainingDistance > distanciaDestino))
+            return;
+
+        if (Time.time < proximaPatrulha)
+            return;
+
+        Vector3 aleatorio = origemPatrulha +
+            new Vector3(
+                Random.Range(-raioPatrulha, raioPatrulha),
+                0f,
+                Random.Range(-raioPatrulha, raioPatrulha)
+            );
+
+        if (NavMesh.SamplePosition(
+            aleatorio,
+            out NavMeshHit hit,
+            raioPatrulha,
+            NavMesh.AllAreas))
+        {
+            NavMeshPath caminho = new NavMeshPath();
+
+            if (agent.CalculatePath(hit.position, caminho) &&
+                caminho.status == NavMeshPathStatus.PathComplete)
+            {
+                agent.SetDestination(hit.position);
+                destinoDefinido = true;
+            }
+        }
+
+        proximaPatrulha = Time.time + Random.Range(
+            tempoMinimoPatrulha,
+            tempoMaximoPatrulha
+        );
+    }
+
+    
+
+
+void Pursuit()
+{
+    if (player == null)
+    {
+        VoltarPatrulha();
+        return;
+    }
+
+    if (!agent.isActiveAndEnabled || !agent.isOnNavMesh)
+    {
+        Debug.LogWarning(name + ": agente fora do NavMesh!");
+        return;
+    }
+
+    float distancia = Vector3.Distance(
+        transform.position,
+        player.position
+    );
+
+    if (distancia <= distanciaAtaque)
+    {
+        ChangeState(EnemyState.Attack);
+        return;
+    }
+
+    agent.isStopped = false;
+    agent.stoppingDistance = distanciaAtaque * 0.8f;
+
+    // Procura um ponto navegável perto do jogador.
+    if (NavMesh.SamplePosition(
+    player.position,
+    out NavMeshHit hit,
+    10f,
+    NavMesh.AllAreas))
+{
+    Debug.Log(
+        "NavMesh encontrado! Player: " + player.position +
+        " | Ponto encontrado: " + hit.position
+    );
+
+    agent.SetDestination(hit.position);
+}
+else
+{
+    Debug.LogError(
+        "Não existe NavMesh num raio de 10 metros do jogador! " +
+        "Posição do jogador: " + player.position
+    );
+}
+
+    Debug.DrawLine(
+        transform.position,
+        player.position,
+        Color.yellow
+    );
+}
+
+
+
+
+    void Attack()
+    {
+        if (player == null)
+        {
+            VoltarPatrulha();
+            return;
+        }
+
+        float distancia = Vector3.Distance(
+            transform.position,
+            player.position
+        );
+
+        if (distancia > distanciaAtaque * 1.2f)
+        {
+            ChangeState(EnemyState.Pursuit);
+            return;
+        }
+
+        agent.isStopped = true;
+
+        // Gira apenas no eixo horizontal.
+        Vector3 olhar = player.position - transform.position;
+        olhar.y = 0f;
+
+        if (olhar.sqrMagnitude > 0.01f)
+        {
+            Quaternion rotacao = Quaternion.LookRotation(olhar);
+
+            transform.rotation = Quaternion.RotateTowards(
+                transform.rotation,
+                rotacao,
+                360f * Time.deltaTime
+            );
+        }
+
+        if (Time.time >= proximoTiro)
+        {
+            aoAtirar?.Invoke();
+            proximoTiro = Time.time + intervaloTiro;
         }
     }
 
     void Flee()
     {
         if (player == null)
+        {
+            VoltarPatrulha();
             return;
+        }
 
         agent.isStopped = false;
         agent.stoppingDistance = 0f;
 
-        Vector3 direction = transform.position - player.position;
-        direction.y = 0f;
+        if (destinoDefinido &&
+            (agent.pathPending ||
+             agent.remainingDistance > distanciaDestino))
+            return;
 
-        if (direction.sqrMagnitude < 0.01f)
-            direction = -transform.forward;
+        Vector3 direcao = transform.position - player.position;
+        direcao.y = 0f;
 
-        direction.Normalize();
+        if (direcao.sqrMagnitude < 0.01f)
+            direcao = -transform.forward;
 
-        Vector3 destino = transform.position
-                        + direction * distanciaFuga;
+        Vector3 destino = transform.position +
+            direcao.normalized * distanciaFuga;
 
         if (NavMesh.SamplePosition(
             destino,
@@ -107,116 +479,64 @@ public class EnemyNavMesh : MonoBehaviour
             distanciaEscolhaFuga,
             NavMesh.AllAreas))
         {
-            if (!agent.hasPath ||
-                Vector3.Distance(agent.destination, hit.position) > 2f)
+            NavMeshPath caminho = new NavMeshPath();
+
+            if (agent.CalculatePath(hit.position, caminho) &&
+                caminho.status == NavMeshPathStatus.PathComplete)
             {
                 agent.SetDestination(hit.position);
+                destinoDefinido = true;
             }
-        }
-
-        /* Olha para o jogador enquanto recua.
-        Vector3 olhar = player.position - transform.position;
-        olhar.y = 0f;
-
-        if (olhar.sqrMagnitude > 0.01f)
-        {
-            transform.rotation = Quaternion.LookRotation(olhar);
-        }
-        */
-
-        // Olha para a direção em que está fugindo.
-        Vector3 olhar = transform.position - player.position;
-        olhar.y = 0f;
-
-        if (olhar.sqrMagnitude > 0.01f)
-        {
-            transform.rotation = Quaternion.LookRotation(olhar);
         }
     }
 
-    void WayPatrol()
+    void VoltarPatrulha()
     {
-        agent.stoppingDistance = 0f;
-
-        if (waypoints != null &&
-            waypoints.Length > 0 &&
-            !agent.pathPending &&
-            agent.remainingDistance < 0.5f)
-        {
-            int randomIndex = Random.Range(0, waypoints.Length);
-            agent.SetDestination(waypoints[randomIndex].position);
-        }
-
-        SearchPlayer();
-    }
-
-    void SearchPlayer()
-    {
-        if (player == null)
-            return;
-
-        if (Physics.Raycast(
-            transform.position,
-            transform.forward,
-            out RaycastHit hit,
-            20f,
-            layerMask))
-        {
-            if (hit.transform == player ||
-                hit.transform.IsChildOf(player))
-            {
-                if (hp <= hpFuga)
-                    ChangeState(EnemyState.Flee);
-                else
-                    ChangeState(EnemyState.Pursuit);
-
-                CallBackup();
-            }
-        }
+        if (waypoints != null && waypoints.Length > 0)
+            ChangeState(EnemyState.WayPatrol);
+        else
+            ChangeState(EnemyState.RandomPatrol);
     }
 
     void CallBackup()
     {
-        EnemyNavMesh[] todosInimigos = FindObjectsByType<EnemyNavMesh>();
+        EnemyNavMesh[] aliados =
+            FindObjectsByType<EnemyNavMesh>();
 
-        foreach (EnemyNavMesh aliado in todosInimigos)
+        foreach (EnemyNavMesh aliado in aliados)
         {
+            if (aliado == this || aliado.player == null)
+                continue;
+
             float distancia = Vector3.Distance(
                 transform.position,
-                aliado.transform.position);
+                aliado.transform.position
+            );
 
-            if (distancia < 10f &&
-                aliado.hp > aliado.hpFuga)
-            {
+            if (distancia < 10f && aliado.hp > aliado.hpFuga)
                 aliado.ChangeState(EnemyState.Pursuit);
-            }
         }
     }
 
     public void TakeDamage(int dano)
     {
-        hp -= dano;
-        hp = Mathf.Clamp(hp, 0, maxHp);
+        hp = Mathf.Clamp(hp - dano, 0, maxHp);
 
         Debug.Log(name + " recebeu " + dano +
                   " de dano. HP: " + hp);
 
         if (hp <= 0)
         {
-            Die();
+            Destroy(gameObject);
             return;
         }
 
-        if (hp <= hpFuga && player != null)
-        {
+        if (hp <= hpFuga)
             ChangeState(EnemyState.Flee);
+        else if (player != null)
+        {
+            ChangeState(EnemyState.Pursuit);
+            CallBackup();
         }
-    }
-
-    void Die()
-    {
-        Debug.Log(name + " foi derrotado!");
-
-        Destroy(gameObject);
     }
 }
