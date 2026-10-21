@@ -30,7 +30,7 @@ public class UIManager : MonoBehaviour
             SpoolSize = s.poolSize;
             ScurrentAmmo = s.currentAmmo;
 
-            bulletsLabel.text = "Balas: " + ScurrentAmmo.ToString() + "/" + SpoolSize.ToString();
+            bulletsLabel.text = ScurrentAmmo.ToString() + "/" + SpoolSize.ToString();
 
             if (ScurrentAmmo <= 0)
             {

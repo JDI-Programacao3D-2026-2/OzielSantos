@@ -111,53 +111,63 @@ IEnumerator Atacar()
 }
 
 
-    void DetectarAlvos()
+    
+void DetectarAlvos()
+{
+    Vector3 centro = transform.position +
+                     transform.forward * (alcance * 0.5f);
+
+    Collider[] atingidos = Physics.OverlapSphere(centro, alcance);
+
+    foreach (Collider col in atingidos)
     {
-        Vector3 centro = transform.position +
-                         transform.forward * (alcance * 0.5f);
+        Transform raiz = col.transform.root;
 
-        Collider[] atingidos = Physics.OverlapSphere(centro, alcance);
+        // Não pode acertar a si mesmo.
+        if (raiz == transform.root)
+            continue;
 
-        foreach (Collider col in atingidos)
-        {
-            Transform raiz = col.transform.root;
+        // O alvo precisa ter a tag configurada.
+        if (!raiz.CompareTag(tagAlvo))
+            continue;
 
-            if (raiz == transform.root)
-                continue;
+        // Não acerta o mesmo alvo várias vezes no mesmo golpe.
+        if (alvosAtingidos.Contains(raiz.gameObject))
+            continue;
 
-            // O alvo precisa ter a tag configurada.
-            if (!raiz.CompareTag(tagAlvo))
-                continue;
+        Vector3 direcao = raiz.position - transform.position;
+        direcao.y = 0f;
 
-            if (alvosAtingidos.Contains(raiz.gameObject))
-                continue;
+        if (direcao.sqrMagnitude < 0.001f)
+            continue;
 
-            Vector3 direcao = raiz.position - transform.position;
-            direcao.y = 0f;
+        if (Vector3.Angle(transform.forward, direcao) >
+            anguloAtaque * 0.5f)
+            continue;
 
-            if (direcao.sqrMagnitude < 0.001f)
-                continue;
+        Knockback alvo = raiz.GetComponent<Knockback>();
 
-            if (Vector3.Angle(transform.forward, direcao) >
-                anguloAtaque * 0.5f)
-                continue;
+        if (alvo == null)
+            continue;
 
-            // Procura o componente de vida/recebimento de dano.
-            Knockback alvo =
-                raiz.GetComponent<Knockback>();
+        alvosAtingidos.Add(raiz.gameObject);
 
-            if (alvo == null)
-                continue;
+        // Só registra como ataque do jogador se este
+        // personagem estiver configurado como jogador.
+        alvo.ReceberAtaque(
+            dano,
+            direcao.normalized,
+            forcaKnockback,
+            jogador
+        );
 
-            alvosAtingidos.Add(raiz.gameObject);
-
-            alvo.ReceberAtaque(
-                dano,
-                direcao.normalized,
-                forcaKnockback
-            );
-        }
+        Debug.Log(
+            name + " acertou " + raiz.name +
+            " | Ataque do jogador: " + jogador
+        );
     }
+}
+
 
     void OnDrawGizmosSelected()
     {

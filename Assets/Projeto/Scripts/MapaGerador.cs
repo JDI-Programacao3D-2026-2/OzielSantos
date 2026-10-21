@@ -30,6 +30,8 @@ public class MapaGerador : MonoBehaviour
 
     [Header("Player")]
     [SerializeField] SpawnDefinicao player;
+    public static Vector3 PosicaoInicialPlayer { get; private set; }
+    public static Quaternion RotacaoInicialPlayer { get; private set; }
 
     [Header("Navegação")]
     [Tooltip("Assa o NavMesh do mapa gerado (necessário pros inimigos andarem).")]
@@ -280,6 +282,9 @@ public class MapaGerador : MonoBehaviour
                 rb.angularVelocity = Vector3.zero;
             }
             Physics.SyncTransforms();
+
+            PosicaoInicialPlayer = PlayerInstanciado.transform.position;
+            RotacaoInicialPlayer = PlayerInstanciado.transform.rotation;
         }
         else if (playerValido)
         {

@@ -1,6 +1,7 @@
 using UnityEngine; 
 using UnityEngine.Pool;
 using UnityEngine.InputSystem;
+using System.Collections;
 
 public class ShootPool : MonoBehaviour
 {
@@ -10,7 +11,6 @@ public class ShootPool : MonoBehaviour
     public int currentAmmo; 
     private int activeProjectiles = 0;
     private ObjectPool<GameObject> pool; 
-
     public bool isEnemy = false;
     private bool canShoot = false;
     private float fireRate = 0.5f;
@@ -18,8 +18,13 @@ public class ShootPool : MonoBehaviour
     public LayerMask layerMask;
     public Transform player;
 
+    private float intervaloOriginal;
+    private Coroutine metralhadoraCoroutine;
+    private bool municaoInfinita = false;
+
     void Awake()
     {
+        intervaloOriginal = fireRate;
         currentAmmo = poolSize;
         pool = new ObjectPool<GameObject>(
             () => Instantiate(projectilePrefab), 
@@ -45,13 +50,19 @@ public class ShootPool : MonoBehaviour
             Invoke("Reload", 2f);
         }
 
-        if (Mouse.current.leftButton.wasPressedThisFrame && !isEnemy)
+        if (!isEnemy &&
+            Mouse.current != null &&
+            Mouse.current.leftButton.isPressed &&
+            Time.time >= nextFireTime)
         {
             Shoot();
-        }
-        if (Keyboard.current[Key.R].isPressed && !isEnemy && !IsInvoking("Reload"))
+}
+        if (Keyboard.current != null &&
+            Keyboard.current.rKey.wasPressedThisFrame &&
+            !isEnemy &&
+            !IsInvoking(nameof(Reload)))
         {
-            Invoke("Reload", 2f);
+            Invoke(nameof(Reload), 2f);
         }
     }
 void FixedUpdate()
@@ -69,12 +80,16 @@ void FixedUpdate()
     
 public void Shoot()
 {
-    if (currentAmmo <= 0 || activeProjectiles >= poolSize)
+    if ((!municaoInfinita && currentAmmo <= 0) ||
+        activeProjectiles >= poolSize ||
+        firePoint == null)
         return;
 
     GameObject projectile = pool.Get();
 
-    currentAmmo--;
+    if (!municaoInfinita)
+        currentAmmo--;
+
     activeProjectiles++;
 
     projectile.transform.SetPositionAndRotation(
@@ -82,10 +97,18 @@ public void Shoot()
         firePoint.rotation
     );
 
-    projectile.GetComponent<Projectile>().StartProjectile(
-        firePoint.forward,
-        this
-    );
+    Projectile script = projectile.GetComponent<Projectile>();
+
+    if (script != null)
+    {
+        script.StartProjectile(firePoint.forward, this);
+        nextFireTime = Time.time + fireRate;
+    }
+    else
+    {
+        activeProjectiles--;
+        pool.Release(projectile);
+    }
 }
 
 
@@ -100,6 +123,40 @@ public void Shoot()
     {
         currentAmmo = poolSize;
     }
+
+    public void AtivarMetralhadora(
+    float duracao,
+    float multiplicadorIntervalo)
+{
+    if (metralhadoraCoroutine != null)
+        StopCoroutine(metralhadoraCoroutine);
+
+    metralhadoraCoroutine =
+        StartCoroutine(MetralhadoraTemporaria(
+            duracao,
+            multiplicadorIntervalo
+        ));
+}
+
+private IEnumerator MetralhadoraTemporaria(
+    float duracao,
+    float multiplicadorIntervalo)
+{
+    municaoInfinita = true;
+
+    fireRate = intervaloOriginal *
+        Mathf.Clamp(multiplicadorIntervalo, 0.1f, 1f);
+
+    Debug.Log("Metralhadora ativada: munição infinita!");
+
+    yield return new WaitForSeconds(duracao);
+
+    municaoInfinita = false;
+    fireRate = intervaloOriginal;
+    metralhadoraCoroutine = null;
+
+    Debug.Log("Metralhadora desativada!");
+}
 }
 
 

@@ -7,18 +7,23 @@ public class Projectile : MonoBehaviour
     public int dano = 20;
 
     private Vector3 direction;
-    private ShootPool Shootpool;
+    private ShootPool shootPool;
+    private bool retornando = false;
 
     void OnEnable()
     {
         CancelInvoke(nameof(SpawnTime));
+        retornando = false;
+        direction = Vector3.zero;
+
         Invoke(nameof(SpawnTime), 5f);
     }
 
     public void StartProjectile(Vector3 direction, ShootPool shooter)
     {
-        this.direction = direction;
-        this.Shootpool = shooter;
+        this.direction = direction.normalized;
+        this.shootPool = shooter;
+        retornando = false;
     }
 
     void Update()
@@ -27,38 +32,50 @@ public class Projectile : MonoBehaviour
     }
 
     void OnCollisionEnter(Collision collision)
-{
-    CancelInvoke(nameof(SpawnTime));
-
-    // Procura o Knockback no objeto atingido ou nos pais.
-    Knockback alvo = collision.collider.GetComponentInParent<Knockback>();
-
-    if (alvo != null)
     {
-        Debug.Log("Projétil acertou " + alvo.name);
+        if (retornando)
+            return;
 
-        alvo.ReceberAtaque(dano, direction, 0f);
-    }
-    else
-    {
-        Debug.Log("Projétil acertou " + collision.collider.name
-            + ", mas não encontrou Knockback.");
-    }
+        retornando = true;
+        CancelInvoke(nameof(SpawnTime));
 
-    if (Shootpool != null)
-        Shootpool.ReturnProjectile(gameObject);
-    else
-        gameObject.SetActive(false);
-}
+        Knockback alvo =
+            collision.collider.GetComponentInParent<Knockback>();
+
+        if (alvo != null)
+        {
+            bool veioDoPlayer =
+                shootPool != null && !shootPool.isEnemy;
+
+            alvo.ReceberAtaque(
+                dano,
+                direction,
+                0f,
+                veioDoPlayer
+            );
+        }
+
+        FinalizarProjetil();
+    }
 
     void SpawnTime()
     {
-        if (Shootpool != null)
+        if (retornando)
+            return;
+
+        retornando = true;
+        FinalizarProjetil();
+    }
+
+    void FinalizarProjetil()
+    {
+        if (shootPool != null)
         {
-            Shootpool.ReturnProjectile(gameObject);
+            shootPool.ReturnProjectile(gameObject);
         }
         else
         {
+            // Projétil criado diretamente pela skill.
             gameObject.SetActive(false);
         }
     }

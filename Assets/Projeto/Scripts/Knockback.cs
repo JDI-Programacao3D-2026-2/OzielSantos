@@ -24,37 +24,67 @@ public class Knockback : MonoBehaviour
         agente = GetComponent<NavMeshAgent>();
     }
 
-    public void ReceberAtaque(
-        int dano,
-        Vector3 direcao,
-        float forca
-    )
+    
+public void ReceberAtaque(
+    int dano,
+    Vector3 direcao,
+    float forca,
+    bool causadoPeloPlayer
+)
+{
+    vida -= dano;
+
+    Debug.Log($"{name} recebeu {dano} de dano. Vida: {vida}");
+
+    if (vida <= 0)
     {
-        vida -= dano;
+        vida = 0;
 
-        if (vida <= 0)
+        bool ehJogador = CompareTag("Player");
+
+        // Registra a kill somente se o jogador matou um inimigo.
+        if (causadoPeloPlayer && !ehJogador)
         {
-            vida = 0;
+            GameManager gm = FindAnyObjectByType<GameManager>();
 
-            if (destruirAoMorrer)
-            {
-                Destroy(gameObject);
-            }
-            else
-            {
-                Debug.Log("O jogador morreu! Ative aqui sua lógica de morte.");
-            }
-
-            return;
+            if (gm != null)
+                gm.RegistrarKill();
         }
 
-        if (rotinaKnockback != null)
-            StopCoroutine(rotinaKnockback);
+        if (ehJogador)
+        {
+            GameManager gm = FindAnyObjectByType<GameManager>();
 
-        rotinaKnockback = StartCoroutine(
-            AplicarKnockback(direcao, forca)
-        );
+            if (gm != null)
+                gm.RegistrarMorte();
+
+            RespawnPlayer();
+        }
+        else if (destruirAoMorrer)
+        {
+            Destroy(gameObject);
+        }
+
+        return;
     }
+
+    if (rotinaKnockback != null)
+        StopCoroutine(rotinaKnockback);
+
+    rotinaKnockback = StartCoroutine(
+        AplicarKnockback(direcao, forca)
+    );
+}
+
+
+public void ReceberAtaque(
+    int dano,
+    Vector3 direcao,
+    float forca
+)
+{
+    ReceberAtaque(dano, direcao, forca, false);
+}
 
     
 IEnumerator AplicarKnockback(Vector3 direcao, float forca)
@@ -164,6 +194,60 @@ IEnumerator AplicarKnockback(Vector3 direcao, float forca)
     }
 
     rotinaKnockback = null;
+}
+
+void RespawnPlayer()
+{
+    StopAllCoroutines();
+    rotinaKnockback = null;
+
+    // Recupera a posição inicial salva pelo MapaGerador.
+    Vector3 posicao = MapaGerador.PosicaoInicialPlayer;
+    Quaternion rotacao = MapaGerador.RotacaoInicialPlayer;
+
+    // Interrompe temporariamente o movimento.
+    if (agente != null)
+    {
+        agente.enabled = false;
+    }
+
+    CharacterController controller =
+        GetComponent<CharacterController>();
+
+    if (controller != null)
+        controller.enabled = false;
+
+    transform.SetPositionAndRotation(posicao, rotacao);
+
+    if (rb != null)
+    {
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+    }
+
+    // Recupera a vida.
+    vida = vidaMaxima;
+
+    if (controller != null)
+        controller.enabled = true;
+
+    if (agente != null)
+    {
+        agente.enabled = true;
+
+        if (NavMesh.SamplePosition(
+            posicao,
+            out NavMeshHit hit,
+            3f,
+            NavMesh.AllAreas))
+        {
+            agente.Warp(hit.position);
+            agente.isStopped = false;
+            agente.ResetPath();
+        }
+    }
+
+    Debug.Log("Jogador renasceu na posição inicial!");
 }
 
 }
