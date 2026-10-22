@@ -12,6 +12,9 @@ public class Skills : MonoBehaviour
         Espadachim
     }
 
+    [Header("Controle da partida")]
+    private GameManager gameManager;
+
     [Header("Classe do personagem")]
     public Classe classe = Classe.Atirador;
 
@@ -35,11 +38,24 @@ public class Skills : MonoBehaviour
     [Range(0.1f, 1f)]
     public float multiplicadorIntervaloTiro = 0.4f;
 
+    [Header("Skill 1 - Arco de Fogo")]
+    public GameObject arcoFogoPrefab;
+    public Transform pontoDisparoEspadachim;
+    public int danoArcoFogo = 40;
+    public float duracaoArcoFogo = 5f;
+
+    [Header("Skill 2 - Corrida do Espadachim")]
+    public PlayerMove movimentoPlayer;
+    public float duracaoCorrida = 4f;
+    public float multiplicadorVelocidade = 1.6f;
+
     private bool skill1Disponivel = true;
     private bool skill2Disponivel = true;
 
     void Start()
     {
+        gameManager = FindAnyObjectByType<GameManager>();
+
         if (skill_Image != null)
         {
             foreach (Image imagem in skill_Image)
@@ -51,24 +67,28 @@ public class Skills : MonoBehaviour
     }
 
     void Update()
+{
+    if (Keyboard.current == null)
+        return;
+
+    // Bloqueia as habilidades durante a contagem regressiva.
+    if (gameManager != null && gameManager.countdownTime > 0)
+        return;
+
+    AtualizarCooldowns();
+
+    if (Keyboard.current.digit1Key.wasPressedThisFrame &&
+        skill1Disponivel)
     {
-        if (Keyboard.current == null)
-            return;
-
-        AtualizarCooldowns();
-
-        if (Keyboard.current.digit1Key.wasPressedThisFrame &&
-            skill1Disponivel)
-        {
-            UsarSkill1();
-        }
-
-        if (Keyboard.current.digit2Key.wasPressedThisFrame &&
-            skill2Disponivel)
-        {
-            UsarSkill2();
-        }
+        UsarSkill1();
     }
+
+    if (Keyboard.current.digit2Key.wasPressedThisFrame &&
+        skill2Disponivel)
+    {
+        UsarSkill2();
+    }
+}
 
     void AtualizarCooldowns()
     {
@@ -108,8 +128,7 @@ public class Skills : MonoBehaviour
         }
         else if (classe == Classe.Espadachim)
         {
-            // Adicione aqui a habilidade do espadachim.
-            Debug.Log("Skill 1 do Espadachim!");
+            AtirarArcoFogo();
         }
 
         IniciarCooldown(0);
@@ -123,8 +142,19 @@ public class Skills : MonoBehaviour
         }
         else if (classe == Classe.Espadachim)
         {
-            // Adicione aqui a habilidade do espadachim.
-            Debug.Log("Skill 2 do Espadachim!");
+            if (movimentoPlayer != null)
+            {
+                movimentoPlayer.AtivarCorrida(
+                    duracaoCorrida,
+                    multiplicadorVelocidade
+                );
+            }
+            else
+            {
+                Debug.LogWarning(
+                    "Configure o PlayerMove no Inspector!"
+                );
+            }
         }
 
         IniciarCooldown(1);
@@ -184,6 +214,44 @@ public class Skills : MonoBehaviour
 
         yield return null;
     }
+
+    void AtirarArcoFogo()
+{
+    if (arcoFogoPrefab == null ||
+        pontoDisparoEspadachim == null)
+    {
+        Debug.LogWarning(
+            "Configure o prefab e o ponto de disparo do arco de fogo!"
+        );
+        return;
+    }
+
+    GameObject objeto = Instantiate(
+        arcoFogoPrefab,
+        pontoDisparoEspadachim.position,
+        pontoDisparoEspadachim.rotation
+    );
+
+    ArcoFogo arco = objeto.GetComponent<ArcoFogo>();
+
+    if (arco != null)
+    {
+        arco.Inicializar(
+            pontoDisparoEspadachim.forward,
+            danoArcoFogo,
+            duracaoArcoFogo,
+            transform
+        );
+    }
+    else
+    {
+        Debug.LogWarning(
+            "O prefab precisa ter o script ArcoFogo!"
+        );
+
+        Destroy(objeto);
+    }
+}
 
     void IniciarCooldown(int indice)
     {

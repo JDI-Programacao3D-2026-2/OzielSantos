@@ -166,6 +166,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 9001247469352005680}
+  - {fileID: 2791733016456047045}
   - {fileID: 2730543856934063369}
   - {fileID: 6986022445476415538}
   - {fileID: 5131774779822301019}
@@ -294,6 +295,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80f3729642ff94670a4739d150c38b10, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMove
+  velocidadeNormal: 5
   rb: {fileID: 3344453245612996949}
 --- !u!114 &6860426953550978545
 MonoBehaviour:
@@ -356,6 +358,13 @@ MonoBehaviour:
   danoSkill1: 60
   duracaoMetralhadora: 5
   multiplicadorIntervaloTiro: 0.4
+  arcoFogoPrefab: {fileID: 6701361008199218298, guid: c12ea67affcdd8d41874b7aa014d5a29, type: 3}
+  pontoDisparoEspadachim: {fileID: 2791733016456047045}
+  danoArcoFogo: 40
+  duracaoArcoFogo: 5
+  movimentoPlayer: {fileID: 2504996676675060681}
+  duracaoCorrida: 5
+  multiplicadorVelocidade: 2.5
 --- !u!1 &1442054531193692923
 GameObject:
   m_ObjectHideFlags: 0
@@ -2026,6 +2035,37 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Mask
   m_ShowMaskGraphic: 1
+--- !u!1 &8744384330583327639
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2791733016456047045}
+  m_Layer: 3
+  m_Name: PontoArcodeFogo
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2791733016456047045
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8744384330583327639}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.25, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2851709138082193375}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8918125889916179232
 GameObject:
   m_ObjectHideFlags: 0
