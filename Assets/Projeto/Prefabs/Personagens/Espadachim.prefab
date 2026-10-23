@@ -365,6 +365,15 @@ MonoBehaviour:
   movimentoPlayer: {fileID: 2504996676675060681}
   duracaoCorrida: 5
   multiplicadorVelocidade: 2.5
+  vidaPlayer: {fileID: 0}
+  centroEscudo: {fileID: 0}
+  curaMago: 20
+  bolaFogoEscudoPrefab: {fileID: 0}
+  quantidadeBolasFogo: 6
+  danoBolasFogo: 25
+  raioEscudo: 2
+  velocidadeRotacaoEscudo: 100
+  duracaoEscudo: 6
 --- !u!1 &1442054531193692923
 GameObject:
   m_ObjectHideFlags: 0
@@ -2060,7 +2069,7 @@ Transform:
   m_GameObject: {fileID: 8744384330583327639}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.25, z: 1}
+  m_LocalPosition: {x: 0, y: -1, z: 1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

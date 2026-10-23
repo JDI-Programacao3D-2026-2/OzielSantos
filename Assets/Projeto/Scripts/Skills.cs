@@ -9,7 +9,8 @@ public class Skills : MonoBehaviour
     public enum Classe
     {
         Atirador,
-        Espadachim
+        Espadachim,
+        Mago
     }
 
     [Header("Controle da partida")]
@@ -25,6 +26,8 @@ public class Skills : MonoBehaviour
     public float cd_1 = 8f;
     public float cd_2 = 12f;
 
+    // Atirador
+
     [Header("Referências do Atirador")]
     public Transform pontoDisparo;
     public GameObject projetilEspecialPrefab;
@@ -38,6 +41,8 @@ public class Skills : MonoBehaviour
     [Range(0.1f, 1f)]
     public float multiplicadorIntervaloTiro = 0.4f;
 
+    // Espadachim
+
     [Header("Skill 1 - Arco de Fogo")]
     public GameObject arcoFogoPrefab;
     public Transform pontoDisparoEspadachim;
@@ -48,6 +53,23 @@ public class Skills : MonoBehaviour
     public PlayerMove movimentoPlayer;
     public float duracaoCorrida = 4f;
     public float multiplicadorVelocidade = 1.6f;
+
+    // Mago
+
+    [Header("Referências do Mago")]
+    public Knockback vidaPlayer;
+    public Transform centroEscudo;
+
+    [Header("Skill 1 - Cura Arcana")]
+    public int curaMago = 20;
+
+    [Header("Skill 2 - Escudo Ígneo")]
+    public GameObject bolaFogoEscudoPrefab;
+    public int quantidadeBolasFogo = 6;
+    public int danoBolasFogo = 25;
+    public float raioEscudo = 2f;
+    public float velocidadeRotacaoEscudo = 100f;
+    public float duracaoEscudo = 6f;
 
     private bool skill1Disponivel = true;
     private bool skill2Disponivel = true;
@@ -130,6 +152,10 @@ public class Skills : MonoBehaviour
         {
             AtirarArcoFogo();
         }
+        else if (classe == Classe.Mago)
+        {
+            CurarMago();
+        }
 
         IniciarCooldown(0);
     }
@@ -155,6 +181,10 @@ public class Skills : MonoBehaviour
                     "Configure o PlayerMove no Inspector!"
                 );
             }
+        }
+        else if (classe == Classe.Mago)
+        {
+            AtivarEscudoFogo();
         }
 
         IniciarCooldown(1);
@@ -251,6 +281,49 @@ public class Skills : MonoBehaviour
 
         Destroy(objeto);
     }
+}
+
+void CurarMago()
+{
+    if (vidaPlayer == null)
+    {
+        Debug.LogWarning("Configure o Knockback do jogador!");
+        return;
+    }
+
+    vidaPlayer.vida = Mathf.Min(
+        vidaPlayer.vida + curaMago,
+        vidaPlayer.vidaMaxima
+    );
+
+    Debug.Log("Mago curou 20 pontos de vida!");
+}
+
+void AtivarEscudoFogo()
+{
+    if (bolaFogoEscudoPrefab == null)
+    {
+        Debug.LogWarning("Configure o prefab das bolas de fogo!");
+        return;
+    }
+
+    Transform centro = centroEscudo != null
+        ? centroEscudo
+        : transform;
+
+    GameObject objeto = new GameObject("EscudoFogo");
+
+    EscudoFogo escudo = objeto.AddComponent<EscudoFogo>();
+
+    escudo.Inicializar(
+        centro,
+        bolaFogoEscudoPrefab,
+        quantidadeBolasFogo,
+        danoBolasFogo,
+        raioEscudo,
+        velocidadeRotacaoEscudo,
+        duracaoEscudo
+    );
 }
 
     void IniciarCooldown(int indice)

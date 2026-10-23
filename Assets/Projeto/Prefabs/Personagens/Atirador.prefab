@@ -294,7 +294,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80f3729642ff94670a4739d150c38b10, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMove
+  velocidadeNormal: 5
   rb: {fileID: 3344453245612996949}
+  teclaDash: 51
+  velocidadeDash: 15
+  duracaoDash: 0.2
+  cooldownDash: 1
 --- !u!114 &8492880951808174405
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -356,6 +361,22 @@ MonoBehaviour:
   danoSkill1: 60
   duracaoMetralhadora: 5
   multiplicadorIntervaloTiro: 0.4
+  arcoFogoPrefab: {fileID: 0}
+  pontoDisparoEspadachim: {fileID: 0}
+  danoArcoFogo: 40
+  duracaoArcoFogo: 5
+  movimentoPlayer: {fileID: 0}
+  duracaoCorrida: 4
+  multiplicadorVelocidade: 1.6
+  vidaPlayer: {fileID: 0}
+  centroEscudo: {fileID: 0}
+  curaMago: 20
+  bolaFogoEscudoPrefab: {fileID: 0}
+  quantidadeBolasFogo: 6
+  danoBolasFogo: 25
+  raioEscudo: 2
+  velocidadeRotacaoEscudo: 100
+  duracaoEscudo: 6
 --- !u!1 &1340498066764317332
 GameObject:
   m_ObjectHideFlags: 0
@@ -1497,7 +1518,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5207656723703973688}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.5, y: 1.9000001, z: -7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1660,7 +1681,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MouseOrbit
   player: {fileID: 2851709138082193375}
   MouseSensitivity: 0.2
-  rotY: 0
+  rotY: 45
   rotX: 0
   minAngle: 30
   maxAngle: 60
@@ -2071,7 +2092,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6926549299599594211}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.5, y: 1.9000001, z: -7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0

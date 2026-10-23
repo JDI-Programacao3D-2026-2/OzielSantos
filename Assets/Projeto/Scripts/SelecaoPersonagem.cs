@@ -1,12 +1,13 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public class SelecaoPersonagem : MonoBehaviour
 {
     [Header("Personagens disponíveis")]
     [SerializeField] private PersonagemData atirador;
     [SerializeField] private PersonagemData espadachim;
-    [SerializeField] private PersonagemData bombardeiro;
+    [SerializeField] private PersonagemData mago;
 
     [Header("Cena")]
     [SerializeField] private string nomeCenaGameplay = "Gameplay";
@@ -24,9 +25,9 @@ public class SelecaoPersonagem : MonoBehaviour
         Escolher(espadachim);
     }
 
-    public void EscolherBombardeiro()
+    public void EscolherMago()
     {
-        Escolher(bombardeiro);
+        Escolher(mago);
     }
 
     private void Escolher(PersonagemData personagem)
