@@ -128,6 +128,37 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!1 &606748530698947139
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2754529459069672612}
+  m_Layer: 3
+  m_Name: GroundCheck
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2754529459069672612
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 606748530698947139}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: -1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2851709138082193375}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &665224862139990211
 GameObject:
   m_ObjectHideFlags: 0
@@ -169,6 +200,8 @@ Transform:
   - {fileID: 6986022445476415538}
   - {fileID: 5131774779822301019}
   - {fileID: 4644822387317697200}
+  - {fileID: 3858743890196843221}
+  - {fileID: 2754529459069672612}
   - {fileID: 3278406783936882689}
   - {fileID: 305531828222513483}
   - {fileID: 632655115377919834}
@@ -296,6 +329,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMove
   velocidadeNormal: 5
   rb: {fileID: 3344453245612996949}
+  forcaPulo: 3
+  groundCheck: {fileID: 2754529459069672612}
+  raioChao: 0.2
+  camadaChao:
+    serializedVersion: 2
+    m_Bits: 4294967295
   teclaDash: 51
   velocidadeDash: 15
   duracaoDash: 0.2
@@ -321,6 +360,12 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   player: {fileID: 0}
+  distanciaMira: 100
+  camadaMira:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  armaVisual: {fileID: 4644822387317697200}
+  velocidadeRotacaoArma: 15
 --- !u!114 &9021490510288810231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -632,7 +677,6 @@ Transform:
   m_LocalScale: {x: 0.18097797, y: 0.19716494, z: 0.55}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 3858743890196843221}
   - {fileID: 2566687158079282602}
   m_Father: {fileID: 2851709138082193375}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1250,12 +1294,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4301826680785317472}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0.75}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.5250015, y: 0.07499993, z: 0.8874998}
+  m_LocalScale: {x: 0.18097797, y: 0.19716494, z: 0.55}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 4644822387317697200}
+  m_Father: {fileID: 2851709138082193375}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4493599714013877093
 GameObject:
@@ -1500,7 +1544,7 @@ GameObject:
   - component: {fileID: 2730543856934063369}
   - component: {fileID: 6811727964266542992}
   - component: {fileID: 6377850098473524569}
-  - component: {fileID: 5265265833709697129}
+  - component: {fileID: 9124068611283281423}
   - component: {fileID: 5104961883536962157}
   - component: {fileID: 6148919004225449980}
   m_Layer: 0
@@ -1594,7 +1638,7 @@ MonoBehaviour:
     CameraRadius: 0.2
     DampingIntoCollision: 0
     DampingFromCollision: 0.5
---- !u!114 &5265265833709697129
+--- !u!114 &9124068611283281423
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1679,12 +1723,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e39318b38850459c9458b95f2ec367e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MouseOrbit
-  player: {fileID: 2851709138082193375}
-  MouseSensitivity: 0.2
-  rotY: 45
-  rotX: 0
-  minAngle: 30
-  maxAngle: 60
+  jogador: {fileID: 2851709138082193375}
+  sensibilidadeMouse: 0.2
+  alturaPivo: 1.6
+  distanciaCamera: 6
+  deslocamentoOmbro: 0.8
+  anguloOlharCima: 55
+  anguloOlharBaixo: 60
+  camadasColisao:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  raioColisao: 0.25
 --- !u!1 &5729659848703660903
 GameObject:
   m_ObjectHideFlags: 0

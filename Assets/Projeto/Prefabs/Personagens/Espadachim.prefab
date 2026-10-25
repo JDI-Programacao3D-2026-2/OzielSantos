@@ -167,6 +167,7 @@ Transform:
   m_Children:
   - {fileID: 9001247469352005680}
   - {fileID: 2791733016456047045}
+  - {fileID: 571361470495830856}
   - {fileID: 2730543856934063369}
   - {fileID: 6986022445476415538}
   - {fileID: 5131774779822301019}
@@ -297,6 +298,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMove
   velocidadeNormal: 5
   rb: {fileID: 3344453245612996949}
+  forcaPulo: 3
+  groundCheck: {fileID: 571361470495830856}
+  raioChao: 0.2
+  camadaChao:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  teclaDash: 51
+  velocidadeDash: 15
+  duracaoDash: 0.2
+  cooldownDash: 1
 --- !u!114 &6860426953550978545
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1418,12 +1429,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e39318b38850459c9458b95f2ec367e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MouseOrbit
-  player: {fileID: 2851709138082193375}
-  MouseSensitivity: 0.2
-  rotY: 0
-  rotX: 0
-  minAngle: 30
-  maxAngle: 60
+  jogador: {fileID: 2851709138082193375}
+  sensibilidadeMouse: 0.2
+  alturaPivo: 1.6
+  distanciaCamera: 6
+  deslocamentoOmbro: 0.8
+  anguloOlharCima: 55
+  anguloOlharBaixo: 60
+  camadasColisao:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  raioColisao: 0.25
 --- !u!1 &5522962504484779852
 GameObject:
   m_ObjectHideFlags: 0
@@ -1957,6 +1973,37 @@ MonoBehaviour:
   bulletsLabel: {fileID: 0}
   hpLabel: {fileID: 1961069744365526172}
   reloadLabel: {fileID: 0}
+--- !u!1 &7480818828278498313
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 571361470495830856}
+  m_Layer: 3
+  m_Name: GroundCheck
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &571361470495830856
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7480818828278498313}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: -1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2851709138082193375}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8043227791111792292
 GameObject:
   m_ObjectHideFlags: 0
@@ -2069,7 +2116,7 @@ Transform:
   m_GameObject: {fileID: 8744384330583327639}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -1, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

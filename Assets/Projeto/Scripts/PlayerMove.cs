@@ -8,9 +8,20 @@ public class PlayerMove : MonoBehaviour
     [Header("Movimento")]
     public float velocidadeNormal = 5f;
     private float speed;
+    private Vector3 normalParede;
 
     public Rigidbody rb;
     private Vector3 direction;
+
+    [Header("Pulo")]
+    public float forcaPulo = 7f;
+    public Transform groundCheck;
+    public float raioChao = 0.2f;
+    public LayerMask camadaChao;
+
+    private bool estaNoChao;
+    private bool podePular = true;
+    private bool estavaNoChao;
 
     [Header("Dash")]
     public Key teclaDash = Key.LeftShift;
@@ -25,6 +36,35 @@ public class PlayerMove : MonoBehaviour
     private Coroutine dashCoroutine;
     private Coroutine corridaCoroutine;
 
+
+    void VerificarChao()
+{
+    if (groundCheck == null || rb == null)
+    {
+        estaNoChao = false;
+        return;
+    }
+
+    estaNoChao = Physics.CheckSphere(
+        groundCheck.position,
+        raioChao,
+        camadaChao,
+        QueryTriggerInteraction.Ignore
+    );
+
+    // Se estiver subindo ou descendo, não está aterrissado.
+    if (rb.linearVelocity.y > 0.1f ||
+        rb.linearVelocity.y < -0.1f)
+    {
+        estaNoChao = false;
+    }
+
+    // Só libera outro pulo quando tocar no chão novamente.
+    if (estaNoChao)
+    {
+        podePular = true;
+    }
+}
     void Start()
     {
         speed = velocidadeNormal;
@@ -60,31 +100,82 @@ public class PlayerMove : MonoBehaviour
 
         direction = Vector3.ClampMagnitude(direction, 1f);
 
-        // Ativa o dash somente se não estiver usando a corrida.
-        if (Keyboard.current[teclaDash].wasPressedThisFrame
-            && dashDisponivel
-            && !corridaAtiva
-            && !dashAtivo)
+        VerificarChao();
+
+        if (Keyboard.current.spaceKey.wasPressedThisFrame
+            && podePular
+            && estaNoChao
+            && !dashAtivo
+            && rb != null)
         {
-            dashCoroutine = StartCoroutine(ExecutarDash());
+            podePular = false;
+
+            rb.AddForce(
+                Vector3.up * forcaPulo,
+                ForceMode.Impulse
+            );
+
+            Debug.Log("Pulo executado!");
+        }
+
+        // Ativa o dash somente se não estiver usando a corrida.
+        if (Keyboard.current.spaceKey.wasPressedThisFrame
+            && estaNoChao
+            && !dashAtivo
+            && rb != null)
+        {
+            rb.AddForce(
+                Vector3.up * forcaPulo,
+                ForceMode.Impulse
+            );
         }
     }
 
-    void FixedUpdate()
+    void OnCollisionStay(Collision collision)
+{
+    foreach (ContactPoint contato in collision.contacts)
     {
-        if (rb == null)
+        if (Vector3.Dot(contato.normal, Vector3.up) < 0.3f)
+        {
+            normalParede = contato.normal;
             return;
+        }
+    }
 
-        // Durante o dash, não sobrescreve a velocidade dele.
-        if (dashAtivo)
-            return;
+    normalParede = Vector3.zero;
+}
 
-        rb.linearVelocity = new Vector3(
-            direction.x * speed,
-            rb.linearVelocity.y,
-            direction.z * speed
+void OnCollisionExit(Collision collision)
+{
+    normalParede = Vector3.zero;
+}
+
+    void FixedUpdate()
+{
+    if (rb == null)
+        return;
+
+    // Durante o dash, não sobrescreve a velocidade dele.
+    if (dashAtivo)
+        return;
+
+    Vector3 movimento = direction * speed;
+
+    // Permite deslizar pela parede.
+    if (normalParede != Vector3.zero)
+    {
+        movimento = Vector3.ProjectOnPlane(
+            movimento,
+            normalParede
         );
     }
+
+    rb.linearVelocity = new Vector3(
+        movimento.x,
+        rb.linearVelocity.y,
+        movimento.z
+    );
+}
 
     private IEnumerator ExecutarDash()
     {

@@ -1,47 +1,92 @@
+using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
+// Câmera de terceira pessoa sobre o ombro do jogador
 public class MouseOrbit : MonoBehaviour
 {
-    [Header("Referências")]
-    public Transform player;
+    [FormerlySerializedAs("player")] public Transform jogador;
+    [FormerlySerializedAs("MouseSensitivity")] public float sensibilidadeMouse = 0.2f;
 
-    [Header("Configurações")]
-    public float MouseSensitivity = 0.2f;
-    public float rotY = 45f;
-    public float rotX = 0f;
+    [Header("Terceira pessoa (ombro)")]
+    [Tooltip("Altura do ponto que a câmera mira, a partir do pivô do jogador (cabeça/ombros).")]
+    public float alturaPivo = 1.6f;
+    [Tooltip("Distância da câmera atrás do jogador.")]
+    public float distanciaCamera = 3f;
+    [Tooltip("Deslocamento lateral (over-the-shoulder). Positivo = ombro direito, negativo = esquerdo.")]
+    public float deslocamentoOmbro = 0.8f;
+    [Tooltip("Até onde dá pra olhar pra CIMA (graus).")]
+    public float anguloOlharCima = 55f;
+    [Tooltip("Até onde dá pra olhar pra BAIXO (graus).")]
+    public float anguloOlharBaixo = 60f;
 
-    [Header("Limites verticais")]
-    public float minAngle = 30f;
-    public float maxAngle = 60f;
+    [Header("Colisão da câmera")]
+    [Tooltip("Camadas que a câmera não atravessa (paredes, chão). A layer do jogador é ignorada sempre.")]
+    public LayerMask camadasColisao = ~0;
+    public float raioColisao = 0.25f;
 
-    void Start()
+    private Transform _camera;
+    private float rotX;
+    private float rotY;
+
+    private void Awake()
+    {
+        // desliga o Cinemachine: esta câmera é controlada por este script
+        CinemachineCamera cinemachineCam = GetComponent<CinemachineCamera>();
+        if (cinemachineCam != null) cinemachineCam.enabled = false;
+
+        _camera = Camera.main != null ? Camera.main.transform : transform;
+    }
+
+    private void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        if (player != null)
-        {
-            rotX = player.eulerAngles.y;
-        }
+        if (jogador != null) rotX = jogador.eulerAngles.y;
     }
 
-    void LateUpdate()
+    private void LateUpdate()
     {
-        if (player == null || Mouse.current == null)
-            return;
+        // player gerado pelo MapaGerador: procura pela tag
+        if (jogador == null)
+        {
+            GameObject achado = GameObject.FindGameObjectWithTag("Player");
+            if (achado == null) return;
 
-        Vector2 delta = Mouse.current.delta.ReadValue()
-                        * MouseSensitivity;
+            jogador = achado.transform;
+            rotX = jogador.eulerAngles.y;
+        }
 
-        rotX += delta.x;
-        rotY = Mathf.Clamp(
-            rotY - delta.y,
-            minAngle,
-            maxAngle
-        );
+        if (Mouse.current != null)
+        {
+            Vector2 delta = Mouse.current.delta.ReadValue() * sensibilidadeMouse;
+            rotX += delta.x;
+            rotY -= delta.y;
+            rotY = Mathf.Clamp(rotY, -anguloOlharCima, anguloOlharBaixo);
+        }
 
-        // A rotação horizontal acompanha o jogador.
-        player.rotation = Quaternion.Euler(0f, rotX, 0f);
+        Quaternion rotation = Quaternion.Euler(rotY, rotX, 0f);
+        Vector3 pivot = jogador.position + Vector3.up * alturaPivo;
+
+        Vector3 shoulder = pivot + rotation * Vector3.right * deslocamentoOmbro;
+        Vector3 back = rotation * Vector3.back;
+        float distance = distanciaCamera;
+
+        // aproxima a câmera se houver parede no caminho
+        int mask = camadasColisao.value & ~(1 << jogador.gameObject.layer);
+        if (Physics.SphereCast(shoulder, raioColisao, back, out RaycastHit hit, distanciaCamera, mask,
+                QueryTriggerInteraction.Ignore))
+        {
+            distance = Mathf.Max(0.1f, hit.distance);
+        }
+
+        Vector3 position = shoulder + back * distance;
+
+        _camera.SetPositionAndRotation(position, rotation);
+
+        // mantém este objeto na mesma posição da câmera
+        if (_camera != transform) transform.SetPositionAndRotation(position, rotation);
     }
 }

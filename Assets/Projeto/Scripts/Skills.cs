@@ -198,10 +198,42 @@ public class Skills : MonoBehaviour
         return;
     }
 
+    Camera cam = Camera.main;
+
+    if (cam == null)
+    {
+        Debug.LogWarning("Nenhuma câmera com a tag MainCamera foi encontrada!");
+        return;
+    }
+
+    float distanciaMira = 100f;
+
+    Ray raio = cam.ViewportPointToRay(
+        new Vector3(0.5f, 0.5f, 0f)
+    );
+
+    Vector3 pontoMira;
+
+    if (Physics.Raycast(
+        raio,
+        out RaycastHit hit,
+        distanciaMira,
+        ~0,
+        QueryTriggerInteraction.Ignore))
+    {
+        pontoMira = hit.point;
+    }
+    else
+    {
+        pontoMira = raio.origin + raio.direction * distanciaMira;
+    }
+
+    Vector3 direcao = (pontoMira - pontoDisparo.position).normalized;
+
     GameObject objeto = Instantiate(
         projetilEspecialPrefab,
         pontoDisparo.position,
-        pontoDisparo.rotation
+        Quaternion.LookRotation(direcao)
     );
 
     Projectile projetil = objeto.GetComponent<Projectile>();
@@ -209,9 +241,7 @@ public class Skills : MonoBehaviour
     if (projetil != null)
     {
         projetil.dano = danoSkill1;
-
-        // Não coloque a bala forte no pool da arma normal.
-        projetil.StartProjectile(pontoDisparo.forward, null);
+        projetil.StartProjectile(direcao, null);
     }
     else
     {
@@ -256,10 +286,43 @@ public class Skills : MonoBehaviour
         return;
     }
 
+    Camera cam = Camera.main;
+
+    if (cam == null)
+    {
+        Debug.LogWarning("Nenhuma câmera MainCamera encontrada!");
+        return;
+    }
+
+    float distanciaMira = 100f;
+
+    Ray raio = cam.ViewportPointToRay(
+        new Vector3(0.5f, 0.5f, 0f)
+    );
+
+    Vector3 pontoMira;
+
+    if (Physics.Raycast(
+        raio,
+        out RaycastHit hit,
+        distanciaMira,
+        ~0,
+        QueryTriggerInteraction.Ignore))
+    {
+        pontoMira = hit.point;
+    }
+    else
+    {
+        pontoMira = raio.origin + raio.direction * distanciaMira;
+    }
+
+    Vector3 direcao =
+        (pontoMira - pontoDisparoEspadachim.position).normalized;
+
     GameObject objeto = Instantiate(
         arcoFogoPrefab,
         pontoDisparoEspadachim.position,
-        pontoDisparoEspadachim.rotation
+        Quaternion.LookRotation(direcao)
     );
 
     ArcoFogo arco = objeto.GetComponent<ArcoFogo>();
@@ -267,7 +330,7 @@ public class Skills : MonoBehaviour
     if (arco != null)
     {
         arco.Inicializar(
-            pontoDisparoEspadachim.forward,
+            direcao,
             danoArcoFogo,
             duracaoArcoFogo,
             transform

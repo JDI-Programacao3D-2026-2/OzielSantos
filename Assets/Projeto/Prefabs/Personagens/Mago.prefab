@@ -171,6 +171,7 @@ Transform:
   - {fileID: 5131774779822301019}
   - {fileID: 3858743890196843221}
   - {fileID: 2545735836805970792}
+  - {fileID: 7331832007327172120}
   - {fileID: 3278406783936882689}
   - {fileID: 305531828222513483}
   - {fileID: 632655115377919834}
@@ -298,6 +299,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMove
   velocidadeNormal: 5
   rb: {fileID: 3344453245612996949}
+  forcaPulo: 3
+  groundCheck: {fileID: 7331832007327172120}
+  raioChao: 0.2
+  camadaChao:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  teclaDash: 51
+  velocidadeDash: 15
+  duracaoDash: 0.2
+  cooldownDash: 1
 --- !u!114 &9021490510288810231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -370,7 +381,7 @@ MonoBehaviour:
   pontoDisparo: {fileID: 3858743890196843221}
   imagemCooldown: {fileID: 1890213604007264330}
   cooldown: 2
-  dano: 25
+  dano: 40
 --- !u!114 &2562137074227335712
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1433,12 +1444,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e39318b38850459c9458b95f2ec367e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MouseOrbit
-  player: {fileID: 2851709138082193375}
-  MouseSensitivity: 0.2
-  rotY: 0
-  rotX: 0
-  minAngle: 30
-  maxAngle: 60
+  jogador: {fileID: 2851709138082193375}
+  sensibilidadeMouse: 0.2
+  alturaPivo: 1.6
+  distanciaCamera: 6
+  deslocamentoOmbro: 0.8
+  anguloOlharCima: 55
+  anguloOlharBaixo: 60
+  camadasColisao:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  raioColisao: 0.25
 --- !u!1 &5729659848703660903
 GameObject:
   m_ObjectHideFlags: 0
@@ -2065,6 +2081,37 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1 &7893292300404045174
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7331832007327172120}
+  m_Layer: 3
+  m_Name: GroundCheck
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7331832007327172120
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7893292300404045174}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2851709138082193375}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8043227791111792292
 GameObject:
   m_ObjectHideFlags: 0

@@ -22,6 +22,63 @@ public class ShootPool : MonoBehaviour
     private Coroutine metralhadoraCoroutine;
     private bool municaoInfinita = false;
 
+    [Header("Mira")]
+    public float distanciaMira = 100f;
+    public LayerMask camadaMira = ~0;
+
+    [Header("Rotação da arma")]
+    public Transform armaVisual;
+    public float velocidadeRotacaoArma = 15f;
+
+    private Vector3 CalcularDirecaoTiro()
+    {
+        Camera cam = Camera.main;
+
+        if (cam == null || firePoint == null)
+            return firePoint != null ? firePoint.forward : transform.forward;
+
+        Ray raio = cam.ViewportPointToRay(
+            new Vector3(0.5f, 0.5f, 0f)
+        );
+
+        Vector3 pontoMira;
+
+        if (Physics.Raycast(
+            raio,
+            out RaycastHit hit,
+            distanciaMira,
+            camadaMira,
+            QueryTriggerInteraction.Ignore))
+        {
+            pontoMira = hit.point;
+        }
+        else
+        {
+            pontoMira = raio.origin + raio.direction * distanciaMira;
+        }
+
+        return (pontoMira - firePoint.position).normalized;
+    }
+
+    void AtualizarRotacaoArma()
+{
+    if (armaVisual == null || firePoint == null)
+        return;
+
+    Vector3 direcao = CalcularDirecaoTiro();
+
+    if (direcao.sqrMagnitude < 0.001f)
+        return;
+
+    Quaternion rotacaoAlvo = Quaternion.LookRotation(direcao);
+
+    armaVisual.rotation = Quaternion.Slerp(
+        armaVisual.rotation,
+        rotacaoAlvo,
+        velocidadeRotacaoArma * Time.deltaTime
+    );
+}
+
     void Awake()
     {
         intervaloOriginal = fireRate;
@@ -64,6 +121,9 @@ public class ShootPool : MonoBehaviour
         {
             Invoke(nameof(Reload), 2f);
         }
+
+        if (!isEnemy)
+        AtualizarRotacaoArma();
     }
 void FixedUpdate()
 {
@@ -78,12 +138,16 @@ void FixedUpdate()
 }
 }
     
+
 public void Shoot()
 {
     if ((!municaoInfinita && currentAmmo <= 0) ||
         activeProjectiles >= poolSize ||
         firePoint == null)
         return;
+
+    // Calcula a direção do tiro a partir do centro da câmera.
+    Vector3 direcao = CalcularDirecaoTiro();
 
     GameObject projectile = pool.Get();
 
@@ -94,14 +158,14 @@ public void Shoot()
 
     projectile.transform.SetPositionAndRotation(
         firePoint.position,
-        firePoint.rotation
+        Quaternion.LookRotation(direcao)
     );
 
     Projectile script = projectile.GetComponent<Projectile>();
 
     if (script != null)
     {
-        script.StartProjectile(firePoint.forward, this);
+        script.StartProjectile(direcao, this);
         nextFireTime = Time.time + fireRate;
     }
     else
@@ -110,6 +174,7 @@ public void Shoot()
         pool.Release(projectile);
     }
 }
+
 
 
     public void ReturnProjectile(GameObject projectile)
