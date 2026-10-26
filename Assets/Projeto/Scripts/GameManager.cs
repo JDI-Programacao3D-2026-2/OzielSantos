@@ -8,7 +8,7 @@ public class GameManager : MonoBehaviour
     [Header("Countdown")]
     public float countdownTime = 5f;
     public TextMeshProUGUI timerLabel;
-    private bool countdown = true;
+    public bool countdown = true;
 
     [Header("Player Stats")]
     public string playerName;

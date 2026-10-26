@@ -129,6 +129,15 @@ public class PlayerMove : MonoBehaviour
                 ForceMode.Impulse
             );
         }
+            
+    if (Keyboard.current[teclaDash].wasPressedThisFrame
+        && dashDisponivel
+        && !dashAtivo
+        && !corridaAtiva)
+    {
+        dashCoroutine = StartCoroutine(ExecutarDash());
+    }
+
     }
 
     void OnCollisionStay(Collision collision)
@@ -150,24 +159,38 @@ void OnCollisionExit(Collision collision)
     normalParede = Vector3.zero;
 }
 
-    void FixedUpdate()
+    
+void FixedUpdate()
 {
     if (rb == null)
         return;
 
-    // Durante o dash, não sobrescreve a velocidade dele.
+    // Não interfere na velocidade durante o dash.
     if (dashAtivo)
         return;
 
     Vector3 movimento = direction * speed;
+    movimento.y = 0f;
 
-    // Permite deslizar pela parede.
-    if (normalParede != Vector3.zero)
+    // Se estiver encostado em uma parede, tenta deslizar
+    // na direção paralela à superfície.
+    if (Physics.SphereCast(
+        transform.position + Vector3.up * 0.5f,
+        0.3f,
+        movimento.normalized,
+        out RaycastHit hit,
+        0.6f,
+        ~0,
+        QueryTriggerInteraction.Ignore))
     {
-        movimento = Vector3.ProjectOnPlane(
-            movimento,
-            normalParede
-        );
+        if (hit.collider.transform != transform &&
+            !hit.collider.transform.IsChildOf(transform))
+        {
+            movimento = Vector3.ProjectOnPlane(
+                movimento,
+                hit.normal
+            );
+        }
     }
 
     rb.linearVelocity = new Vector3(
@@ -177,6 +200,7 @@ void OnCollisionExit(Collision collision)
     );
 }
 
+
     private IEnumerator ExecutarDash()
     {
         dashAtivo = true;
@@ -184,7 +208,6 @@ void OnCollisionExit(Collision collision)
 
         Vector3 direcaoDash = direction;
 
-        // Se não estiver andando, usa a direção para a qual o personagem olha.
         if (direcaoDash.sqrMagnitude < 0.01f)
             direcaoDash = transform.forward;
 

@@ -30,35 +30,59 @@ public class ShootPool : MonoBehaviour
     public Transform armaVisual;
     public float velocidadeRotacaoArma = 15f;
 
-    private Vector3 CalcularDirecaoTiro()
+    
+
+private Vector3 CalcularDirecaoTiro()
+{
+    // INIMIGOS: mira diretamente no jogador.
+    if (isEnemy)
     {
-        Camera cam = Camera.main;
-
-        if (cam == null || firePoint == null)
-            return firePoint != null ? firePoint.forward : transform.forward;
-
-        Ray raio = cam.ViewportPointToRay(
-            new Vector3(0.5f, 0.5f, 0f)
-        );
-
-        Vector3 pontoMira;
-
-        if (Physics.Raycast(
-            raio,
-            out RaycastHit hit,
-            distanciaMira,
-            camadaMira,
-            QueryTriggerInteraction.Ignore))
+        if (player == null)
         {
-            pontoMira = hit.point;
-        }
-        else
-        {
-            pontoMira = raio.origin + raio.direction * distanciaMira;
+            GameObject objetoJogador =
+                GameObject.FindGameObjectWithTag("Player");
+
+            if (objetoJogador != null)
+                player = objetoJogador.transform;
         }
 
-        return (pontoMira - firePoint.position).normalized;
+        if (player == null || firePoint == null)
+            return Vector3.zero;
+
+        Vector3 alvo = player.position + Vector3.up;
+
+        return (alvo - firePoint.position).normalized;
     }
+
+    // JOGADOR: mira pelo centro da câmera.
+    Camera cam = Camera.main;
+
+    if (cam == null || firePoint == null)
+        return Vector3.zero;
+
+    Ray raio = cam.ViewportPointToRay(
+        new Vector3(0.5f, 0.5f, 0f)
+    );
+
+    Vector3 pontoMiraCamera;
+
+    if (Physics.Raycast(
+        raio,
+        out RaycastHit hit,
+        distanciaMira,
+        camadaMira,
+        QueryTriggerInteraction.Ignore))
+    {
+        pontoMiraCamera = hit.point;
+    }
+    else
+    {
+        pontoMiraCamera =
+            raio.origin + raio.direction * distanciaMira;
+    }
+
+    return (pontoMiraCamera - firePoint.position).normalized;
+}
 
     void AtualizarRotacaoArma()
 {
@@ -137,7 +161,6 @@ void FixedUpdate()
       Debug.DrawLine(transform.position, transform.position + transform.forward * 100f, Color.red);
 }
 }
-    
 
 public void Shoot()
 {
@@ -146,8 +169,44 @@ public void Shoot()
         firePoint == null)
         return;
 
-    // Calcula a direção do tiro a partir do centro da câmera.
-    Vector3 direcao = CalcularDirecaoTiro();
+    Vector3 direcao;
+
+    if (isEnemy)
+{
+    GameObject objetoJogador = GameObject.FindGameObjectWithTag("Player");
+
+    if (objetoJogador == null)
+    {
+        Debug.LogWarning($"{name}: não encontrou o Player!");
+        return;
+    }
+
+    // Atualiza a referência para o jogador atual.
+    player = objetoJogador.transform;
+
+    // Mira na posição atual do jogador, aproximadamente no peito.
+    Vector3 alvo = player.position + Vector3.up * 0.5f;
+
+    direcao = (alvo - firePoint.position).normalized;
+
+    Debug.DrawLine(firePoint.position, alvo, Color.magenta, 3f);
+
+    Debug.Log($"{name} atirando. Posição atual do jogador: {player.position}");
+}
+else
+{
+    direcao = CalcularDirecaoTiro();
+}
+
+    if (direcao.sqrMagnitude < 0.001f)
+        return;
+
+    Debug.DrawRay(
+        firePoint.position,
+        direcao * 15f,
+        Color.blue,
+        3f
+    );
 
     GameObject projectile = pool.Get();
 
@@ -174,8 +233,6 @@ public void Shoot()
         pool.Release(projectile);
     }
 }
-
-
 
     public void ReturnProjectile(GameObject projectile)
     {

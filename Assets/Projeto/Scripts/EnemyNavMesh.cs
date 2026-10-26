@@ -138,8 +138,20 @@ void Update()
 {
     BuscarPlayer();
 
-    if (agent == null || !agent.enabled || !agent.isOnNavMesh)
-        return;
+    if (agent == null)
+{
+    Debug.LogWarning(name + ": agent está nulo!");
+    return;
+}
+
+if (!agent.enabled || !agent.isOnNavMesh)
+{
+    Debug.LogWarning(
+        $"{name}: agente inválido! " +
+        $"Enabled={agent.enabled}, OnNavMesh={agent.isOnNavMesh}"
+    );
+    return;
+}
 
     // A fuga por vida tem prioridade sobre os outros estados.
     if (DeveFugir())
@@ -167,6 +179,16 @@ void Update()
                 ChangeState(EnemyState.Pursuit);
         }
     }
+
+    if (currentState == EnemyState.Flee)
+{
+    Debug.Log(
+        $"{name}: estado Flee | " +
+        $"isStopped={agent.isStopped} | " +
+        $"hasPath={agent.hasPath} | " +
+        $"velocity={agent.velocity.magnitude}"
+    );
+}
 
     switch (currentState)
     {
@@ -501,47 +523,101 @@ void Pursuit()
         }
     }
 
-    void Flee()
+    
+void Flee()
+{
+    if (player == null)
     {
-        if (player == null)
-        {
-            VoltarPatrulha();
-            return;
-        }
+        VoltarPatrulha();
+        return;
+    }
 
-        agent.isStopped = false;
-        agent.stoppingDistance = 0f;
+    if (!agent.isActiveAndEnabled || !agent.isOnNavMesh)
+        return;
 
-        if (destinoDefinido &&
-            (agent.pathPending ||
-             agent.remainingDistance > distanciaDestino))
-            return;
+    agent.isStopped = false;
+    agent.stoppingDistance = 0f;
 
-        Vector3 direcao = transform.position - player.position;
-        direcao.y = 0f;
+    // Continua fugindo enquanto estiver seguindo um caminho válido.
+    if (agent.hasPath &&
+        (agent.pathPending ||
+         agent.remainingDistance > distanciaDestino))
+    {
+        return;
+    }
 
-        if (direcao.sqrMagnitude < 0.01f)
-            direcao = -transform.forward;
+    Vector3 direcao = transform.position - player.position;
+    direcao.y = 0f;
 
-        Vector3 destino = transform.position +
-            direcao.normalized * distanciaFuga;
+    if (direcao.sqrMagnitude < 0.01f)
+        direcao = -transform.forward;
 
-        if (NavMesh.SamplePosition(
+    direcao.Normalize();
+
+    // Tenta encontrar um ponto de fuga, começando mais perto.
+    float[] distanciasTentativa = { distanciaFuga, 5f, 3f };
+
+    foreach (float distancia in distanciasTentativa)
+    {
+        Vector3 destino = transform.position + direcao * distancia;
+
+        if (!NavMesh.SamplePosition(
             destino,
             out NavMeshHit hit,
             distanciaEscolhaFuga,
             NavMesh.AllAreas))
         {
-            NavMeshPath caminho = new NavMeshPath();
+            continue;
+        }
 
-            if (agent.CalculatePath(hit.position, caminho) &&
-                caminho.status == NavMeshPathStatus.PathComplete)
-            {
-                agent.SetDestination(hit.position);
-                destinoDefinido = true;
-            }
+        NavMeshPath caminho = new NavMeshPath();
+
+        if (agent.CalculatePath(hit.position, caminho) &&
+            caminho.status == NavMeshPathStatus.PathComplete)
+        {
+            agent.SetDestination(hit.position);
+            destinoDefinido = true;
+
+            Debug.Log(name + " está fugindo para " + hit.position);
+            return;
         }
     }
+
+    // Se não encontrou um ponto na direção escolhida,
+    // tenta fugir para algum lado próximo.
+    for (int i = 0; i < 8; i++)
+    {
+        Vector3 direcaoAlternativa =
+            Quaternion.Euler(0f, i * 45f, 0f) * direcao;
+
+        Vector3 destinoAlternativo =
+            transform.position + direcaoAlternativa * 4f;
+
+        if (!NavMesh.SamplePosition(
+            destinoAlternativo,
+            out NavMeshHit hit,
+            distanciaEscolhaFuga,
+            NavMesh.AllAreas))
+        {
+            continue;
+        }
+
+        NavMeshPath caminho = new NavMeshPath();
+
+        if (agent.CalculatePath(hit.position, caminho) &&
+            caminho.status == NavMeshPathStatus.PathComplete)
+        {
+            agent.SetDestination(hit.position);
+            destinoDefinido = true;
+
+            Debug.Log(name + " está fugindo por uma rota alternativa.");
+            return;
+        }
+    }
+
+    Debug.LogWarning(name + ": não encontrou uma rota de fuga válida!");
+}
+
 
     void VoltarPatrulha()
     {

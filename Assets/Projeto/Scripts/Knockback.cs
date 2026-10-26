@@ -24,7 +24,12 @@ public class Knockback : MonoBehaviour
         agente = GetComponent<NavMeshAgent>();
     }
 
-    
+public void DefinirVidaMaxima(int novaVida)
+{
+    vidaMaxima = novaVida;
+    vida = novaVida;
+}
+
 public void ReceberAtaque(
     int dano,
     Vector3 direcao,
@@ -185,15 +190,46 @@ IEnumerator AplicarKnockback(Vector3 direcao, float forca)
         }
     }
 
-    // Reativa a perseguição do inimigo após o empurrão.
+    
+    // Reposiciona o inimigo no NavMesh antes de reativar a navegação.
     if (agenteEstavaAtivo && agente != null)
     {
-        agente.enabled = true;
-        agente.isStopped = false;
-        agente.ResetPath();
+        Vector3 posicaoAtual = transform.position;
+
+        if (NavMesh.SamplePosition(
+            posicaoAtual,
+            out NavMeshHit hit,
+            3f,
+            NavMesh.AllAreas))
+        {
+            agente.enabled = true;
+
+            if (agente.isOnNavMesh)
+            {
+                agente.Warp(hit.position);
+                agente.isStopped = false;
+                agente.ResetPath();
+            }
+            else
+            {
+                Debug.LogWarning(
+                    $"{name}: agente ativado, mas continua fora do NavMesh."
+                );
+            }
+        }
+        else
+        {
+            Debug.LogWarning(
+                $"{name}: não encontrou NavMesh após o knockback."
+            );
+
+            // Evita deixar o inimigo permanentemente sem agente.
+            agente.enabled = true;
+        }
     }
 
     rotinaKnockback = null;
+
 }
 
 void RespawnPlayer()

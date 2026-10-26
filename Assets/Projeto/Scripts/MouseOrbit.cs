@@ -76,11 +76,24 @@ public class MouseOrbit : MonoBehaviour
 
         // aproxima a câmera se houver parede no caminho
         int mask = camadasColisao.value & ~(1 << jogador.gameObject.layer);
-        if (Physics.SphereCast(shoulder, raioColisao, back, out RaycastHit hit, distanciaCamera, mask,
-                QueryTriggerInteraction.Ignore))
+        
+        if (Physics.SphereCast(
+            shoulder,
+            raioColisao,
+            back,
+            out RaycastHit hit,
+            distanciaCamera,
+            mask,
+            QueryTriggerInteraction.Ignore))
         {
-            distance = Mathf.Max(0.1f, hit.distance);
+            // Mantém a câmera um pouco antes da superfície.
+            distance = Mathf.Clamp(
+                hit.distance - 0.15f,
+                0.1f,
+                distanciaCamera
+            );
         }
+
 
         Vector3 position = shoulder + back * distance;
 
