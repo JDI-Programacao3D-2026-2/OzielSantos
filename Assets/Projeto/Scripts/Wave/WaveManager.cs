@@ -19,7 +19,7 @@ public class WaveManager : MonoBehaviour
     public float tempoTextoNaTela = 2f;
 
     [Header("Vitória")]
-    public string nomeCenaVitoria = "Vitoria";
+    public string nomeCenaResultados = "Resultados";
 
     private int waveAtual = 0;
     private bool iniciandoWave = false;
@@ -89,7 +89,7 @@ public class WaveManager : MonoBehaviour
 
                 yield return new WaitForSeconds(tempoTextoNaTela);
 
-                SceneManager.LoadScene(nomeCenaVitoria);
+                SceneManager.LoadScene(nomeCenaResultados);
                 yield break;
             }
 

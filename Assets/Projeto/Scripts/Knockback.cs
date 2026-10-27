@@ -67,6 +67,11 @@ public void ReceberAtaque(
         }
         else if (destruirAoMorrer)
         {
+            DropsInimigo drops = GetComponent<DropsInimigo>();
+
+            if (drops != null)
+                drops.SoltarDrops();
+
             Destroy(gameObject);
         }
 

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PersonagemData
   id: 3
   nome: Mago
-  descricao: '[Range]
+  descricao: '[Ranged]
 
     Skill 1: Cura
 

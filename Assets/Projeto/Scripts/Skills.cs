@@ -279,7 +279,8 @@ public class Skills : MonoBehaviour
         yield return null;
     }
 
-    void AtirarArcoFogo()
+    
+void AtirarArcoFogo()
 {
     if (arcoFogoPrefab == null ||
         pontoDisparoEspadachim == null)
@@ -290,38 +291,14 @@ public class Skills : MonoBehaviour
         return;
     }
 
-    Camera cam = Camera.main;
+    // Usa a direção horizontal para a qual o personagem olha.
+    Vector3 direcao = transform.root.forward;
+    direcao.y = 0f;
 
-    if (cam == null)
-    {
-        Debug.LogWarning("Nenhuma câmera MainCamera encontrada!");
+    if (direcao.sqrMagnitude < 0.001f)
         return;
-    }
 
-    float distanciaMira = 100f;
-
-    Ray raio = cam.ViewportPointToRay(
-        new Vector3(0.5f, 0.5f, 0f)
-    );
-
-    Vector3 pontoMira;
-
-    if (Physics.Raycast(
-        raio,
-        out RaycastHit hit,
-        distanciaMira,
-        ~0,
-        QueryTriggerInteraction.Ignore))
-    {
-        pontoMira = hit.point;
-    }
-    else
-    {
-        pontoMira = raio.origin + raio.direction * distanciaMira;
-    }
-
-    Vector3 direcao =
-        (pontoMira - pontoDisparoEspadachim.position).normalized;
+    direcao.Normalize();
 
     GameObject objeto = Instantiate(
         arcoFogoPrefab,
@@ -337,7 +314,7 @@ public class Skills : MonoBehaviour
             direcao,
             danoArcoFogo,
             duracaoArcoFogo,
-            transform
+            transform.root
         );
     }
     else
@@ -349,6 +326,7 @@ public class Skills : MonoBehaviour
         Destroy(objeto);
     }
 }
+
 
 void CurarMago()
 {

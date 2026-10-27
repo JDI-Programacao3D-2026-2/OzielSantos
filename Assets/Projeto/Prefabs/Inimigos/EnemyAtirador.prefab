@@ -124,7 +124,6 @@ GameObject:
   - component: {fileID: 3803901971549552919}
   - component: {fileID: 3084613331190274932}
   - component: {fileID: 3949043382973725695}
-  - component: {fileID: 6584617806098852485}
   m_Layer: 8
   m_Name: MinimapPin
   m_TagString: Untagged
@@ -141,7 +140,7 @@ Transform:
   m_GameObject: {fileID: 2858773217306802455}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 2, z: 0}
+  m_LocalPosition: {x: 0, y: 25, z: 0}
   m_LocalScale: {x: 0.19999999, y: 1, z: 0.19999999}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -204,19 +203,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &6584617806098852485
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2858773217306802455}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a5f80597c2fe24b4bb4f9ce3b893dc0a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LockRotationMinimap
-  rotacaoFixa: {x: 0, y: 0, z: 0}
 --- !u!1 &4075835762107431741
 GameObject:
   m_ObjectHideFlags: 0
@@ -376,6 +362,7 @@ GameObject:
   - component: {fileID: 8852863119727357887}
   - component: {fileID: 6639222081620569984}
   - component: {fileID: 3659314809167952342}
+  - component: {fileID: 4172131961330124863}
   m_Layer: 6
   m_Name: EnemyAtirador
   m_TagString: Enemy
@@ -593,6 +580,36 @@ MonoBehaviour:
   vidaMaxima: 100
   duracaoKnockback: 0.2
   destruirAoMorrer: 1
+--- !u!114 &4172131961330124863
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4187289786563658073}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d8ee649c69982344b93f34eb194cccf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DropsInimigo
+  orbPontosPrefab: {fileID: 8788165809650874991, guid: 51e9f96ca76bdbc42a585a66cd54b560, type: 3}
+  orbCuraPrefab: {fileID: 8788165809650874991, guid: 5e0e586049acf2648a9cc892ae6297f2, type: 3}
+  chanceOrb: 75
+  chanceCura: 25
+  pontosPorOrb: 10
+  quantidadeOrbs: 6
+  distanciaMinimaEntreOrbs: 1.5
+  raioDistribuicaoOrbs: 3
+  camadaChao:
+    serializedVersion: 2
+    m_Bits: 512
+  camadasObstaculos:
+    serializedVersion: 2
+    m_Bits: 128
+  alturaInicialRaycast: 10
+  raioVerificacao: 0.3
+  distanciaMinimaDoChao: 0.1
+  tentativasPorOrb: 30
 --- !u!1 &5184225068791725929
 GameObject:
   m_ObjectHideFlags: 0

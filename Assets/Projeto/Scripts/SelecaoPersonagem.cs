@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
@@ -9,11 +10,57 @@ public class SelecaoPersonagem : MonoBehaviour
     [SerializeField] private PersonagemData espadachim;
     [SerializeField] private PersonagemData mago;
 
-    [Header("Cena")]
-    [SerializeField] private string nomeCenaGameplay = "Gameplay";
+    [Header("Painéis do menu")]
+    [SerializeField] private GameObject painelModos;
+    [SerializeField] private GameObject painelPersonagens;
 
-    // A escolha existe durante a sessão atual.
+    [Header("Cenas")]
+    [SerializeField] private string nomeCenaGameplay = "Gameplay";
+    [SerializeField] private string nomeCenaTutorial = "Tutorial";
+
+    [Header("Texto do modo escolhido")]
+    [SerializeField] private TextMeshProUGUI textoModo;
+
+    private enum ModoJogo
+    {
+        Nenhum,
+        Tutorial,
+        Gameplay
+    }
+
+    private ModoJogo modoEscolhido = ModoJogo.Nenhum;
+
     public static PersonagemData PersonagemEscolhido { get; private set; }
+
+    void Start()
+    {
+        // Começa mostrando a escolha do modo.
+        MostrarPainelModos();
+    }
+
+    // BOTÕES DO PRIMEIRO PAINEL
+
+        public void EscolherModoTutorial()
+    {
+        modoEscolhido = ModoJogo.Tutorial;
+
+        if (textoModo != null)
+            textoModo.text = "Modo Tutorial";
+
+        MostrarSelecaoPersonagem();
+    }
+
+    public void EscolherModoGameplay()
+    {
+        modoEscolhido = ModoJogo.Gameplay;
+
+        if (textoModo != null)
+            textoModo.text = "Modo Gameplay Normal";
+
+        MostrarSelecaoPersonagem();
+    }
+
+    // BOTÕES DE ESCOLHA DOS PERSONAGENS
 
     public void EscolherAtirador()
     {
@@ -32,21 +79,57 @@ public class SelecaoPersonagem : MonoBehaviour
 
     private void Escolher(PersonagemData personagem)
     {
-        if (personagem == null)
+        if (modoEscolhido == ModoJogo.Nenhum)
         {
-            Debug.LogError("O personagem selecionado não foi configurado.");
+            Debug.LogWarning("Escolha primeiro o modo de jogo.");
             return;
         }
 
-        if (personagem.prefab == null)
+        if (personagem == null || personagem.prefab == null)
         {
             Debug.LogError(
-                $"O personagem {personagem.nome} não possui um prefab."
+                "O personagem selecionado ou seu prefab não foi configurado."
             );
             return;
         }
 
         PersonagemEscolhido = personagem;
-        SceneManager.LoadScene(nomeCenaGameplay);
+
+        string cenaDestino = modoEscolhido == ModoJogo.Tutorial
+            ? nomeCenaTutorial
+            : nomeCenaGameplay;
+
+        SceneManager.LoadScene(cenaDestino);
+    }
+
+    // BOTÕES DE VOLTAR
+
+    public void VoltarParaModos()
+    {
+        modoEscolhido = ModoJogo.Nenhum;
+        MostrarPainelModos();
+    }
+
+    private void MostrarPainelModos()
+    {
+        if (painelModos != null)
+            painelModos.SetActive(true);
+
+        if (painelPersonagens != null)
+            painelPersonagens.SetActive(false);
+    }
+
+    private void MostrarSelecaoPersonagem()
+    {
+        if (painelModos != null)
+            painelModos.SetActive(false);
+
+        if (painelPersonagens != null)
+            painelPersonagens.SetActive(true);
+    }
+
+    public void FecharJogo()
+    {
+        Application.Quit();
     }
 }

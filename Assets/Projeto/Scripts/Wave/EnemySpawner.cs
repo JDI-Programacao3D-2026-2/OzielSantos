@@ -15,6 +15,14 @@ public class EnemySpawner : MonoBehaviour
     [Header("Quantidade")]
     public int quantidadeInicial = 5;
     public int aumentoPorWave = 2;
+    public int InimigosRestantes
+{
+    get
+    {
+        inimigosDaWave.RemoveAll(inimigo => inimigo == null);
+        return inimigosDaWave.Count;
+    }
+}
 
     [Header("Posições")]
     [Tooltip("Distância mínima do jogador")]

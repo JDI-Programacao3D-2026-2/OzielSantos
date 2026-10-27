@@ -3,14 +3,20 @@ using UnityEngine;
 using System.Collections;
 using TMPro;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
     [Header("Modo de jogo")]
     public bool tutorial = false;
 
+    [Header("Sistema de pausa")]
+    public GameObject painelPausa;
+
+    private bool jogoPausado = false;
+
     [Tooltip("Nome da classe selecionada, por exemplo: Atirador, Mago ou Espadachim")]
-    public string classeEscolhida = "Atirador";
+    private string classeEscolhida = "Atirador";
 
     [Header("Countdown")]
     public float countdownTime = 5f;
@@ -42,11 +48,34 @@ public class GameManager : MonoBehaviour
     public int playerKills = 0;
     public int playerDeaths = 0;
 
+    [Header("Pontuação da partida")]
+    public TextMeshProUGUI textoPontuacao;
+    public int playerScore = 0;
+
+    public void AdicionarPontos(int quantidade)
+{
+    if (quantidade <= 0)
+        return;
+
+    playerScore += quantidade;
+    EstatisticasPartida.pontuacao = playerScore;
+
+    AtualizarTextoPontuacao();
+}
+
     [Header("UI")]
     public RectTransform frags;
     public TextMeshProUGUI playerNameLabel;
     public TextMeshProUGUI playerKillsLabel;
     public TextMeshProUGUI playerDeathsLabel;
+
+    void AtualizarTextoPontuacao()
+{
+    if (textoPontuacao != null)
+    {
+        textoPontuacao.text = $"Pontos:\n<size=40>{playerScore}</size>";
+    }
+}
 
     void Awake()
     {
@@ -56,6 +85,15 @@ public class GameManager : MonoBehaviour
 
 void Start()
 {
+    EstatisticasPartida.Resetar();
+    AtualizarTextoPontuacao();
+
+    if (painelPausa != null)
+            painelPausa.SetActive(false);
+
+        jogoPausado = false;
+        Time.timeScale = 1f;
+
     AtualizarFrags();
 
     if (tutorial)
@@ -80,6 +118,61 @@ void Start()
 
         StartCoroutine(StartCountdown());
     }
+}
+
+void ControlarPausa()
+{
+    if (Keyboard.current == null)
+        return;
+
+    // ESC abre ou fecha o painel.
+    if (Keyboard.current.escapeKey.wasPressedThisFrame)
+    {
+        if (jogoPausado)
+            RetomarJogo();
+        else
+            PausarJogo();
+    }
+
+    // ENTER volta ao menu enquanto a pausa está aberta.
+    if (jogoPausado &&
+        (Keyboard.current.enterKey.wasPressedThisFrame ||
+         Keyboard.current.numpadEnterKey.wasPressedThisFrame))
+    {
+        VoltarAoMenu();
+    }
+}
+
+public void PausarJogo()
+{
+    jogoPausado = true;
+    Time.timeScale = 0f;
+
+    if (painelPausa != null)
+        painelPausa.SetActive(true);
+
+    Cursor.visible = true;
+    Cursor.lockState = CursorLockMode.None;
+}
+
+public void RetomarJogo()
+{
+    jogoPausado = false;
+    Time.timeScale = 1f;
+
+    if (painelPausa != null)
+        painelPausa.SetActive(false);
+
+    Cursor.visible = false;
+    Cursor.lockState = CursorLockMode.Locked;
+}
+
+public void VoltarAoMenu()
+{
+    Time.timeScale = 1f;
+    jogoPausado = false;
+
+    SceneManager.LoadScene("Menu");
 }
 
 IEnumerator PrepararTutorial()
@@ -128,6 +221,11 @@ IEnumerator PrepararTutorial()
 
     void Update()
     {
+        ControlarPausa();
+
+        if (jogoPausado)
+            return;
+        
         if (Keyboard.current != null &&
             Keyboard.current.tabKey.isPressed &&
             frags != null)
@@ -267,15 +365,15 @@ IEnumerator PrepararTutorial()
         switch (etapaTutorial)
         {
             case 0:
-                tutorialLabel.text = "TUTORIAL\nWASD para mover";
+                tutorialLabel.text = "TUTORIAL\n[W], [A], [S], [D] para mover";
                 break;
 
             case 1:
-                tutorialLabel.text = "TUTORIAL\nSpace para pular";
+                tutorialLabel.text = "TUTORIAL\n[Espaço] para pular";
                 break;
 
             case 2:
-                tutorialLabel.text = "TUTORIAL\nShift para dash";
+                tutorialLabel.text = "TUTORIAL\n[Shift] para dash";
                 break;
 
             case 3:
@@ -284,13 +382,13 @@ IEnumerator PrepararTutorial()
 
             case 4:
                 if (classeEscolhida.ToLower() == "atirador")
-                    tutorialLabel.text = "TUTORIAL\nR para recarregar";
+                    tutorialLabel.text = "TUTORIAL\n[R] para recarregar";
                 else
-                    tutorialLabel.text = "TUTORIAL\nPressione 1 ou 2 para usar skills";
+                    tutorialLabel.text = "TUTORIAL\nPressione [1] ou [2] para usar skills";
                 break;
 
             case 5:
-                tutorialLabel.text = "TUTORIAL\nPressione 1 ou 2 para usar skills";
+                tutorialLabel.text = "TUTORIAL\nPressione [1] ou [2] para usar skills";
                 break;
         }
     }
@@ -298,6 +396,7 @@ IEnumerator PrepararTutorial()
     public void RegistrarKill()
     {
         playerKills++;
+        EstatisticasPartida.kills = playerKills;
 
         Debug.Log(
             playerName + " eliminou um inimigo! Kills: " + playerKills
@@ -330,19 +429,38 @@ IEnumerator PrepararTutorial()
         if (tutorialLabel != null)
             tutorialLabel.text = "TUTORIAL CONCLUÍDO!";
 
-        Debug.Log("Tutorial concluído!");
+        StartCoroutine(VoltarAoMenuDepoisDoTutorial());
+    }
+
+    private IEnumerator VoltarAoMenuDepoisDoTutorial()
+    {
+        yield return new WaitForSeconds(2f);
+
+        Time.timeScale = 1f;
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        SceneManager.LoadScene("Menu");
     }
 
     public void RegistrarMorte()
-    {
-        playerDeaths++;
+{
+    playerDeaths++;
 
-        Debug.Log(
-            playerName + " morreu! Mortes: " + playerDeaths
-        );
+    // Perde 10% da pontuação atual.
+    // A conversão para int arredonda para baixo.
+    playerScore = Mathf.FloorToInt(playerScore * 0.9f);
 
-        AtualizarFrags();
-    }
+    EstatisticasPartida.mortes = playerDeaths;
+    EstatisticasPartida.pontuacao = playerScore;
+
+    Debug.Log(
+        $"O jogador morreu! Pontuação atual: {playerScore}"
+    );
+
+    AtualizarTextoPontuacao();
+}
 
     void AtualizarFrags()
     {

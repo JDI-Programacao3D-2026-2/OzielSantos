@@ -627,27 +627,70 @@ void Flee()
             ChangeState(EnemyState.RandomPatrol);
     }
 
-    void CallBackup()
+    
+void CallBackup()
+{
+    EnemyNavMesh[] aliados =
+    FindObjectsByType<EnemyNavMesh>();
+
+    int aliadosChamados = 0;
+
+    foreach (EnemyNavMesh aliado in aliados)
     {
-        EnemyNavMesh[] aliados =
-            FindObjectsByType<EnemyNavMesh>();
+        if (aliado == this)
+            continue;
 
-        foreach (EnemyNavMesh aliado in aliados)
+        // Ignora inimigos desativados.
+        if (!aliado.isActiveAndEnabled)
+            continue;
+
+        // Atualiza a referência ao jogador, se necessário.
+        if (aliado.player == null)
         {
-            if (aliado == this || aliado.player == null)
-                continue;
+            GameObject jogador = GameObject.FindGameObjectWithTag("Player");
 
-            float distancia = Vector3.Distance(
-                transform.position,
-                aliado.transform.position
+            if (jogador != null)
+                aliado.player = jogador.transform;
+        }
+
+        if (aliado.player == null)
+            continue;
+
+        // Verifica a distância horizontal entre os inimigos.
+        Vector3 posicaoInimigo = transform.position;
+        Vector3 posicaoAliado = aliado.transform.position;
+
+        posicaoInimigo.y = 0f;
+        posicaoAliado.y = 0f;
+
+        float distancia = Vector3.Distance(
+            posicaoInimigo,
+            posicaoAliado
+        );
+
+        // Só chama inimigos próximos que não estejam fugindo.
+        if (distancia <= 10f && !aliado.DeveFugir())
+        {
+            aliado.ChangeState(EnemyState.Pursuit);
+
+            aliadosChamados++;
+
+            Debug.Log(
+                $"{name} chamou {aliado.name} para ajudar! " +
+                $"Distância: {distancia:F1}m"
             );
-
-            if (distancia < 10f && !aliado.DeveFugir())
-                aliado.ChangeState(EnemyState.Pursuit);
         }
     }
 
-    public void TakeDamage(int dano, bool causadoPeloPlayer)
+    Debug.Log(
+        $"{name}: chamados de reforço concluídos. " +
+        $"Aliados chamados: {aliadosChamados}"
+    );
+}
+
+
+    
+public void TakeDamage(int dano, bool causadoPeloPlayer)
 {
     if (vidaInimigo == null)
         vidaInimigo = GetComponent<Knockback>();
@@ -671,10 +714,14 @@ void Flee()
     if (DeveFugir())
     {
         ChangeState(EnemyState.Flee);
+        Debug.Log(name + " está fugindo e não chamará reforços.");
     }
     else
     {
         ChangeState(EnemyState.Pursuit);
+
+        Debug.Log(name + " foi atingido e está chamando reforços!");
+
         CallBackup();
     }
 }
