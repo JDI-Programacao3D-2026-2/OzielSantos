@@ -5,6 +5,7 @@ using System.Collections;
 
 public class ShootPool : MonoBehaviour
 {
+    private GameManager gameManager;
     public GameObject projectilePrefab; 
     public Transform firePoint; 
     public int poolSize = 20; 
@@ -105,6 +106,7 @@ private Vector3 CalcularDirecaoTiro()
 
     void Awake()
     {
+        gameManager = FindAnyObjectByType<GameManager>();
         intervaloOriginal = fireRate;
         currentAmmo = poolSize;
         pool = new ObjectPool<GameObject>(
@@ -137,14 +139,24 @@ private Vector3 CalcularDirecaoTiro()
             Time.time >= nextFireTime)
         {
             Shoot();
+            gameManager.TutorialAtacar();
 }
         if (Keyboard.current != null &&
-            Keyboard.current.rKey.wasPressedThisFrame &&
-            !isEnemy &&
-            !IsInvoking(nameof(Reload)))
+        Keyboard.current.rKey.wasPressedThisFrame &&
+        !isEnemy &&
+        !IsInvoking(nameof(Reload)))
+    {
+        if (currentAmmo < poolSize)
         {
             Invoke(nameof(Reload), 2f);
+
+            gameManager.TutorialRecarregar();
+
+            UIManager ui = FindAnyObjectByType<UIManager>();
+            if (ui != null)
+                ui.MostrarRecarregando();
         }
+    }
 
         if (!isEnemy)
         AtualizarRotacaoArma();
@@ -241,9 +253,13 @@ else
         pool.Release(projectile);        
     }
 
-    private void Reload()
+    void Reload()
     {
         currentAmmo = poolSize;
+
+        UIManager ui = FindAnyObjectByType<UIManager>();
+        if (ui != null)
+            ui.FinalizarRecarga();
     }
 
     public void AtivarMetralhadora(

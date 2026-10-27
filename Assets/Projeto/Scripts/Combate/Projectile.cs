@@ -9,25 +9,54 @@ public class Projectile : MonoBehaviour
     private Vector3 direction;
     private ShootPool shootPool;
     private bool retornando = false;
+    private bool veioDoPlayer = false;
 
     void OnEnable()
     {
         CancelInvoke(nameof(SpawnTime));
+
         retornando = false;
         direction = Vector3.zero;
+        shootPool = null;
+        veioDoPlayer = false;
 
         Invoke(nameof(SpawnTime), 5f);
     }
 
+    // Mantém compatibilidade com o ShootPool existente.
     public void StartProjectile(Vector3 direction, ShootPool shooter)
     {
         this.direction = direction.normalized;
-        this.shootPool = shooter;
+        shootPool = shooter;
+
+        veioDoPlayer = shooter != null && !shooter.isEnemy;
+
+        retornando = false;
+    }
+
+    // Novo método para ataques criados diretamente, como o do Mago.
+    public void StartProjectile(Vector3 direction, GameObject atacante)
+    {
+        this.direction = direction.normalized;
+        shootPool = null;
+
+        if (atacante != null)
+        {
+            veioDoPlayer = atacante.CompareTag("Player");
+        }
+        else
+        {
+            veioDoPlayer = false;
+        }
+
         retornando = false;
     }
 
     void Update()
     {
+        if (retornando)
+            return;
+
         transform.position += direction * speed * Time.deltaTime;
     }
 
@@ -44,9 +73,6 @@ public class Projectile : MonoBehaviour
 
         if (alvo != null)
         {
-            bool veioDoPlayer =
-                shootPool != null && !shootPool.isEnemy;
-
             alvo.ReceberAtaque(
                 dano,
                 direction,
@@ -75,7 +101,6 @@ public class Projectile : MonoBehaviour
         }
         else
         {
-            // Projétil criado diretamente pela skill.
             gameObject.SetActive(false);
         }
     }

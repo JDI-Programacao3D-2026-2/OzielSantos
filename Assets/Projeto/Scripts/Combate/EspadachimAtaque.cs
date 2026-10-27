@@ -7,6 +7,7 @@ using UnityEngine.AI;
 public class EspadachimAtaque : MonoBehaviour
 {
     [Header("Configuração do ataque")]
+    private GameManager gameManager;
     [SerializeField] private int dano = 25;
     [SerializeField] private float alcance = 2f;
     [SerializeField] private float anguloAtaque = 120f;
@@ -33,6 +34,8 @@ public class EspadachimAtaque : MonoBehaviour
 
     void Start()
     {
+        gameManager = FindAnyObjectByType<GameManager>();
+        
         if (espada != null)
             rotacaoInicial = espada.localRotation;
     }
@@ -46,6 +49,7 @@ public class EspadachimAtaque : MonoBehaviour
         podeAtacar)
     {
         StartCoroutine(Atacar());
+        gameManager.TutorialAtacar();
     }
 }
 

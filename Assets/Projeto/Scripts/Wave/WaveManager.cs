@@ -1,6 +1,7 @@
 
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using TMPro;
 
 public class WaveManager : MonoBehaviour
@@ -10,55 +11,64 @@ public class WaveManager : MonoBehaviour
     public GameManager gameManager;
     public TMP_Text textoWave;
 
-    [Header("Configurações")]
+    [Header("Configurações das Waves")]
+    [Min(1)]
+    public int quantidadeMaximaWaves = 5;
+
     public float tempoEntreWaves = 3f;
     public float tempoTextoNaTela = 2f;
 
+    [Header("Vitória")]
+    public string nomeCenaVitoria = "Vitoria";
+
     private int waveAtual = 0;
     private bool iniciandoWave = false;
+    private bool jogoFinalizado = false;
 
-    
     IEnumerator Start()
-{
-    // Espera o GameManager existir.
-    while (gameManager == null)
     {
-        gameManager = FindAnyObjectByType<GameManager>();
-        yield return null;
+        // Espera o GameManager existir.
+        while (gameManager == null)
+        {
+            gameManager = FindAnyObjectByType<GameManager>();
+            yield return null;
+        }
+
+        // Espera o EnemySpawner existir.
+        while (enemySpawner == null)
+        {
+            enemySpawner = FindAnyObjectByType<EnemySpawner>();
+            yield return null;
+        }
+
+        // Aguarda o countdown terminar.
+        while (gameManager.countdown)
+        {
+            yield return null;
+        }
+
+        Debug.Log("Countdown terminou! Iniciando as waves.");
+
+        yield return StartCoroutine(ControlarWaves());
     }
-
-    // Espera o EnemySpawner existir.
-    while (enemySpawner == null)
-    {
-        enemySpawner = FindAnyObjectByType<EnemySpawner>();
-        yield return null;
-    }
-
-    // Aguarda o countdown terminar.
-    while (gameManager.countdown)
-    {
-        yield return null;
-    }
-
-    Debug.Log("Countdown terminou! Iniciando as waves.");
-
-    StartCoroutine(ControlarWaves());
-}
-
 
     IEnumerator ControlarWaves()
     {
-        while (true)
+        while (waveAtual < quantidadeMaximaWaves)
         {
             iniciandoWave = true;
             waveAtual++;
+
+            Debug.Log($"Iniciando wave {waveAtual} de {quantidadeMaximaWaves}");
 
             MostrarTextoWave("WAVE " + waveAtual);
 
             yield return new WaitForSeconds(tempoTextoNaTela);
 
-            // Gera os inimigos da onda atual.
-            yield return StartCoroutine(enemySpawner.SpawnarWave(waveAtual));
+            // Gera os inimigos da wave atual.
+            yield return StartCoroutine(
+                enemySpawner.SpawnarWave(waveAtual)
+            );
 
             iniciandoWave = false;
 
@@ -70,6 +80,20 @@ public class WaveManager : MonoBehaviour
 
             MostrarTextoWave("WAVE " + waveAtual + " CONCLUÍDA!");
 
+            // Se esta foi a última wave, termina o jogo.
+            if (waveAtual >= quantidadeMaximaWaves)
+            {
+                jogoFinalizado = true;
+
+                Debug.Log("Todas as waves foram concluídas! Vitória!");
+
+                yield return new WaitForSeconds(tempoTextoNaTela);
+
+                SceneManager.LoadScene(nomeCenaVitoria);
+                yield break;
+            }
+
+            // Aguarda antes de iniciar a próxima wave.
             yield return new WaitForSeconds(tempoEntreWaves);
         }
     }

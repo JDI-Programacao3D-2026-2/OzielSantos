@@ -49,9 +49,10 @@ MonoBehaviour:
   - {fileID: 4187289786563658073, guid: ef02f25992bbe2644b9abfce4052684c, type: 3}
   quantidadeInicial: 5
   aumentoPorWave: 2
-  raioSpawn: 30
   distanciaMinimaJogador: 12
+  distanciaMaximaJogador: 45
   distanciaMinimaInimigos: 2
   tentativasPorInimigo: 30
+  distanciaBuscaNavMesh: 5
   hpInicial: 100
-  aumentoHPPorWave: 20
+  aumentoHPPorWave: 10

@@ -647,18 +647,23 @@ void Flee()
         }
     }
 
-    public void TakeDamage(int dano)
+    public void TakeDamage(int dano, bool causadoPeloPlayer)
 {
     if (vidaInimigo == null)
         vidaInimigo = GetComponent<Knockback>();
 
     if (vidaInimigo == null)
     {
-        Debug.LogError(name + ": não possui InimigoKnockback!");
+        Debug.LogError(name + ": não possui Knockback!");
         return;
     }
 
-    vidaInimigo.ReceberAtaque(dano, Vector3.zero, 0f);
+    vidaInimigo.ReceberAtaque(
+        dano,
+        Vector3.zero,
+        0f,
+        causadoPeloPlayer
+    );
 
     if (vidaInimigo.vida <= 0)
         return;

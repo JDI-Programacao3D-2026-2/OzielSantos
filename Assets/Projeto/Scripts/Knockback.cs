@@ -190,30 +190,28 @@ IEnumerator AplicarKnockback(Vector3 direcao, float forca)
         }
     }
 
-    
-    // Reposiciona o inimigo no NavMesh antes de reativar a navegação.
+    // Recupera o NavMeshAgent após o knockback.
     if (agenteEstavaAtivo && agente != null)
     {
-        Vector3 posicaoAtual = transform.position;
-
         if (NavMesh.SamplePosition(
-            posicaoAtual,
+            transform.position,
             out NavMeshHit hit,
-            3f,
+            5f,
             NavMesh.AllAreas))
         {
+            agente.enabled = false;
+            transform.position = hit.position;
             agente.enabled = true;
 
             if (agente.isOnNavMesh)
             {
-                agente.Warp(hit.position);
-                agente.isStopped = false;
                 agente.ResetPath();
+                agente.isStopped = false;
             }
             else
             {
-                Debug.LogWarning(
-                    $"{name}: agente ativado, mas continua fora do NavMesh."
+                Debug.LogError(
+                    $"{name}: não foi possível reativar o agente no NavMesh."
                 );
             }
         }
@@ -222,9 +220,6 @@ IEnumerator AplicarKnockback(Vector3 direcao, float forca)
             Debug.LogWarning(
                 $"{name}: não encontrou NavMesh após o knockback."
             );
-
-            // Evita deixar o inimigo permanentemente sem agente.
-            agente.enabled = true;
         }
     }
 

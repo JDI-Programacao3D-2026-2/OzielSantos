@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class AtaqueMago : MonoBehaviour
 {
     [Header("Configuração do ataque")]
+    private GameManager gameManager;
     public GameObject bolaDeFogoPrefab;
     public Transform pontoDisparo;
 
@@ -18,6 +19,11 @@ public class AtaqueMago : MonoBehaviour
     private float proximoDisparo;
     private System.Collections.Generic.List<Collider> bolasDoDisparo =
     new System.Collections.Generic.List<Collider>();
+
+    void Start()
+    {
+        gameManager = FindAnyObjectByType<GameManager>();
+    }
 
     void Update()
     {
@@ -38,6 +44,7 @@ public class AtaqueMago : MonoBehaviour
             Time.time >= proximoDisparo)
         {
             Atirar();
+            gameManager.TutorialAtacar();
         }
     }
 
@@ -146,7 +153,7 @@ void CriarBolaDeFogo(Vector3 direcao)
     if (projetil != null)
     {
         projetil.dano = dano;
-        projetil.StartProjectile(direcao, null);
+        projetil.StartProjectile(direcao, transform.root.gameObject);
     }
     else
     {

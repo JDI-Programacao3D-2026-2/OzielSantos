@@ -94,7 +94,7 @@ public class Skills : MonoBehaviour
         return;
 
     // Bloqueia as habilidades durante a contagem regressiva.
-    if (gameManager != null && gameManager.countdownTime > 0)
+    if (gameManager != null && gameManager.countdown)
         return;
 
     AtualizarCooldowns();
@@ -144,6 +144,8 @@ public class Skills : MonoBehaviour
 
     void UsarSkill1()
     {
+        gameManager.TutorialUsarSkill();
+
         if (classe == Classe.Atirador)
         {
             AtirarProjetilEspecial();
@@ -162,6 +164,8 @@ public class Skills : MonoBehaviour
 
     void UsarSkill2()
     {
+        gameManager.TutorialUsarSkill();
+
         if (classe == Classe.Atirador)
         {
             AtivarMetralhadora();
@@ -241,7 +245,7 @@ public class Skills : MonoBehaviour
     if (projetil != null)
     {
         projetil.dano = danoSkill1;
-        projetil.StartProjectile(direcao, null);
+        projetil.StartProjectile(direcao, transform.root.gameObject);
     }
     else
     {

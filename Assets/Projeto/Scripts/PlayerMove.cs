@@ -36,6 +36,8 @@ public class PlayerMove : MonoBehaviour
     private Coroutine dashCoroutine;
     private Coroutine corridaCoroutine;
 
+    private GameManager gameManager;
+
 
     void VerificarChao()
 {
@@ -67,6 +69,7 @@ public class PlayerMove : MonoBehaviour
 }
     void Start()
     {
+        gameManager = FindAnyObjectByType<GameManager>();
         speed = velocidadeNormal;
     }
 
@@ -115,6 +118,11 @@ public class PlayerMove : MonoBehaviour
                 ForceMode.Impulse
             );
 
+            if (gameManager != null)
+            {
+                gameManager.TutorialPular();
+            }
+
             Debug.Log("Pulo executado!");
         }
 
@@ -136,6 +144,10 @@ public class PlayerMove : MonoBehaviour
         && !corridaAtiva)
     {
         dashCoroutine = StartCoroutine(ExecutarDash());
+        if (gameManager != null)
+        {
+            gameManager.TutorialDash();
+        }
     }
 
     }

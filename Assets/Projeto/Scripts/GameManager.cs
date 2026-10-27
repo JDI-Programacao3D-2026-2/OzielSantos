@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using System.Collections;
 using TMPro;
@@ -5,10 +6,36 @@ using UnityEngine.InputSystem;
 
 public class GameManager : MonoBehaviour
 {
+    [Header("Modo de jogo")]
+    public bool tutorial = false;
+
+    [Tooltip("Nome da classe selecionada, por exemplo: Atirador, Mago ou Espadachim")]
+    public string classeEscolhida = "Atirador";
+
     [Header("Countdown")]
     public float countdownTime = 5f;
     public TextMeshProUGUI timerLabel;
     public bool countdown = true;
+
+    [Header("Tutorial")]
+    public TextMeshProUGUI tutorialLabel;
+    private int etapaTutorial = 0;
+    private int killsTutorial = 0;
+    private bool tutorialIniciado = false;
+    private bool inimigosTutorialLiberados = false;
+    private bool tutorialConcluido = false;
+    private MapaGerador mapaGerador;
+
+    [Header("Inimigos do Tutorial")]
+    public GameObject[] prefabsInimigos;
+    public float distanciaMinimaSpawn = 30f;
+    public float distanciaMaximaSpawn = 60f;
+    public int tentativasSpawn = 100;
+
+    private readonly System.Collections.Generic.List<GameObject>
+        inimigosTutorial = new();
+
+    private bool spawnTutorialRealizado = false;
 
     [Header("Player Stats")]
     public string playerName;
@@ -23,27 +50,108 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
-        frags = frags.GetComponent<RectTransform>();
-    }
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        AtualizarFrags();
-        Time.timeScale = 0f;
-        timerLabel.text = countdownTime.ToString();
-        StartCoroutine(StartCountdown());
+        if (frags != null)
+            frags = frags.GetComponent<RectTransform>();
     }
 
-    // Update is called once per frame
+void Start()
+{
+    AtualizarFrags();
+
+    if (tutorial)
+    {
+        countdown = false;
+        Time.timeScale = 1f;
+
+        if (timerLabel != null)
+            timerLabel.gameObject.SetActive(false);
+
+        StartCoroutine(PrepararTutorial());
+    }
+    else
+    {
+        Time.timeScale = 0f;
+
+        if (timerLabel != null)
+        {
+            timerLabel.gameObject.SetActive(true);
+            timerLabel.text = countdownTime.ToString();
+        }
+
+        StartCoroutine(StartCountdown());
+    }
+}
+
+IEnumerator PrepararTutorial()
+{
+    // Espera o MapaGerador existir.
+    while (mapaGerador == null)
+    {
+        mapaGerador = FindAnyObjectByType<MapaGerador>();
+        yield return null;
+    }
+
+    // Espera o prefab escolhido ser instanciado de verdade.
+    while (mapaGerador.PlayerInstanciado == null)
+        yield return null;
+
+    // Identifica a classe usando o nome do prefab instanciado.
+    string nomePrefab = mapaGerador.PlayerInstanciado.name;
+    nomePrefab = nomePrefab.Replace("(Clone)", "").Trim();
+
+    if (nomePrefab.IndexOf(
+        "Atirador",
+        System.StringComparison.OrdinalIgnoreCase) >= 0)
+    {
+        classeEscolhida = "Atirador";
+    }
+    else if (nomePrefab.IndexOf(
+        "Espadachim",
+        System.StringComparison.OrdinalIgnoreCase) >= 0)
+    {
+        classeEscolhida = "Espadachim";
+    }
+    else if (nomePrefab.IndexOf(
+        "Mago",
+        System.StringComparison.OrdinalIgnoreCase) >= 0)
+    {
+        classeEscolhida = "Mago";
+    }
+
+    Debug.Log("Classe detectada para o tutorial: " + classeEscolhida);
+
+    tutorialIniciado = true;
+    etapaTutorial = 0;
+    AtualizarTextoTutorial();
+}
+
+
     void Update()
     {
-        if (Keyboard.current[Key.Tab].isPressed)
+        if (Keyboard.current != null &&
+            Keyboard.current.tabKey.isPressed &&
+            frags != null)
         {
-            frags.anchoredPosition = new Vector2(0, 0);
+            frags.anchoredPosition = Vector2.zero;
         }
-        else
+        else if (frags != null)
         {
             frags.anchoredPosition = new Vector2(0, 400);
+        }
+
+        // Detecta WASD para a primeira tarefa.
+        if (tutorial && tutorialIniciado &&
+            etapaTutorial == 0 &&
+            Keyboard.current != null)
+        {
+            bool movimentou =
+                Keyboard.current.wKey.isPressed ||
+                Keyboard.current.aKey.isPressed ||
+                Keyboard.current.sKey.isPressed ||
+                Keyboard.current.dKey.isPressed;
+
+            if (movimentou)
+                ConcluirEtapaTutorial();
         }
     }
 
@@ -54,39 +162,299 @@ public class GameManager : MonoBehaviour
             if (countdownTime > 0f)
             {
                 yield return new WaitForSecondsRealtime(1f);
+
                 countdownTime -= 1f;
-                timerLabel.text = countdownTime.ToString();
+
+                if (timerLabel != null)
+                    timerLabel.text = countdownTime.ToString();
             }
             else
             {
-                timerLabel.text = "Vai!";
+                if (timerLabel != null)
+                    timerLabel.text = "Vai!";
+
                 countdown = false;
                 Time.timeScale = 1f;
+
                 yield return new WaitForSecondsRealtime(1f);
-                timerLabel.gameObject.SetActive(false);
-                StopCoroutine(StartCountdown());
+
+                if (timerLabel != null)
+                    timerLabel.gameObject.SetActive(false);
+
+                yield break;
             }
+        }
+    }
+
+    // Chame estes métodos nos scripts quando as ações realmente acontecerem.
+
+    public void TutorialPular()
+    {
+        RegistrarAcaoTutorial(1);
+    }
+
+    public void TutorialDash()
+    {
+        RegistrarAcaoTutorial(2);
+    }
+
+    public void TutorialAtacar()
+    {
+        RegistrarAcaoTutorial(3);
+    }
+
+    public void TutorialRecarregar()
+    {
+        if (classeEscolhida.ToLower() == "atirador")
+            RegistrarAcaoTutorial(4);
+    }
+
+    public void TutorialUsarSkill()
+    {
+        int etapaSkill = classeEscolhida.ToLower() == "atirador" ? 5 : 4;
+        RegistrarAcaoTutorial(etapaSkill);
+    }
+
+    void RegistrarAcaoTutorial(int etapaEsperada)
+    {
+        if (!tutorial || !tutorialIniciado || tutorialConcluido)
+            return;
+
+        if (etapaTutorial == etapaEsperada)
+            ConcluirEtapaTutorial();
+    }
+
+    void ConcluirEtapaTutorial()
+    {
+        if (!tutorial || tutorialConcluido)
+            return;
+
+        etapaTutorial++;
+
+        int etapaFinalAntesDosInimigos =
+        classeEscolhida.ToLower() == "atirador" ? 6 : 5;
+
+    if (etapaTutorial == etapaFinalAntesDosInimigos)
+    {
+        StartCoroutine(IniciarEtapaDeCombate());
+        return;
+    }
+
+        AtualizarTextoTutorial();
+    }
+
+    IEnumerator IniciarEtapaDeCombate()
+{
+    inimigosTutorialLiberados = true;
+
+    if (tutorialLabel != null)
+    {
+        tutorialLabel.text =
+            "TUTORIAL: Derrote 3 inimigos!\n" +
+            "Inimigos derrotados: 0/3";
+    }
+
+    yield return StartCoroutine(SpawnarInimigosTutorial());
+}
+
+    void AtualizarTextoTutorial()
+    {
+        if (tutorialLabel == null)
+            return;
+
+        tutorialLabel.gameObject.SetActive(true);
+
+        switch (etapaTutorial)
+        {
+            case 0:
+                tutorialLabel.text = "TUTORIAL\nWASD para mover";
+                break;
+
+            case 1:
+                tutorialLabel.text = "TUTORIAL\nSpace para pular";
+                break;
+
+            case 2:
+                tutorialLabel.text = "TUTORIAL\nShift para dash";
+                break;
+
+            case 3:
+                tutorialLabel.text = "TUTORIAL\nClique esquerdo para atacar";
+                break;
+
+            case 4:
+                if (classeEscolhida.ToLower() == "atirador")
+                    tutorialLabel.text = "TUTORIAL\nR para recarregar";
+                else
+                    tutorialLabel.text = "TUTORIAL\nPressione 1 ou 2 para usar skills";
+                break;
+
+            case 5:
+                tutorialLabel.text = "TUTORIAL\nPressione 1 ou 2 para usar skills";
+                break;
         }
     }
 
     public void RegistrarKill()
     {
         playerKills++;
-        Debug.Log(playerName + " eliminou um inimigo! Kills: " + playerKills);
+
+        Debug.Log(
+            playerName + " eliminou um inimigo! Kills: " + playerKills
+        );
+
         AtualizarFrags();
+
+        if (tutorial && inimigosTutorialLiberados &&
+            !tutorialConcluido)
+        {
+            killsTutorial++;
+
+            if (tutorialLabel != null)
+            {
+                tutorialLabel.text =
+                    "TUTORIAL: Derrote 3 inimigos!\n" +
+                    "Inimigos derrotados: " +
+                    Mathf.Min(killsTutorial, 3) + "/3";
+            }
+
+            if (killsTutorial >= 3)
+                FinalizarTutorial();
+        }
+    }
+
+    void FinalizarTutorial()
+    {
+        tutorialConcluido = true;
+
+        if (tutorialLabel != null)
+            tutorialLabel.text = "TUTORIAL CONCLUÍDO!";
+
+        Debug.Log("Tutorial concluído!");
     }
 
     public void RegistrarMorte()
     {
         playerDeaths++;
-        Debug.Log(playerName + " morreu! Mortes: " + playerDeaths);
+
+        Debug.Log(
+            playerName + " morreu! Mortes: " + playerDeaths
+        );
+
         AtualizarFrags();
     }
 
     void AtualizarFrags()
     {
-        playerNameLabel.text = playerName;
-        playerKillsLabel.text = playerKills.ToString();
-        playerDeathsLabel.text = playerDeaths.ToString();
+        if (playerNameLabel != null)
+            playerNameLabel.text = playerName;
+
+        if (playerKillsLabel != null)
+            playerKillsLabel.text = playerKills.ToString();
+
+        if (playerDeathsLabel != null)
+            playerDeathsLabel.text = playerDeaths.ToString();
     }
+
+    IEnumerator SpawnarInimigosTutorial()
+{
+    if (spawnTutorialRealizado)
+        yield break;
+
+    spawnTutorialRealizado = true;
+
+    Transform jogador = GameObject.FindGameObjectWithTag("Player")?.transform;
+
+    if (jogador == null)
+    {
+        Debug.LogError("Jogador não encontrado!");
+        yield break;
+    }
+
+    if (prefabsInimigos == null || prefabsInimigos.Length == 0)
+    {
+        Debug.LogError("Configure os prefabs dos inimigos no GameManager!");
+        yield break;
+    }
+
+    inimigosTutorial.Clear();
+
+    for (int i = 0; i < 3; i++)
+    {
+        bool encontrouPosicao = false;
+
+        for (int tentativa = 0; tentativa < tentativasSpawn; tentativa++)
+        {
+            Vector2 direcao = Random.insideUnitCircle.normalized;
+
+            float distancia = Random.Range(
+                distanciaMinimaSpawn,
+                distanciaMaximaSpawn
+            );
+
+            Vector3 ponto = jogador.position + new Vector3(
+                direcao.x * distancia,
+                0f,
+                direcao.y * distancia
+            );
+
+            if (!UnityEngine.AI.NavMesh.SamplePosition(
+                ponto,
+                out UnityEngine.AI.NavMeshHit hit,
+                5f,
+                UnityEngine.AI.NavMesh.AllAreas))
+            {
+                continue;
+            }
+
+            if (Vector3.Distance(hit.position, jogador.position)
+                < distanciaMinimaSpawn)
+            {
+                continue;
+            }
+
+            bool pertoDeOutro = false;
+
+            foreach (GameObject existente in inimigosTutorial)
+            {
+                if (existente != null &&
+                    Vector3.Distance(
+                        hit.position,
+                        existente.transform.position
+                    ) < 10f)
+                {
+                    pertoDeOutro = true;
+                    break;
+                }
+            }
+
+            if (pertoDeOutro)
+                continue;
+
+            GameObject prefab = prefabsInimigos[
+                Random.Range(0, prefabsInimigos.Length)
+            ];
+
+            GameObject inimigo = Instantiate(
+                prefab,
+                hit.position,
+                Quaternion.identity
+            );
+
+            inimigosTutorial.Add(inimigo);
+            encontrouPosicao = true;
+            break;
+        }
+
+        if (!encontrouPosicao)
+        {
+            Debug.LogWarning(
+                "Não foi possível encontrar uma posição para o inimigo " +
+                (i + 1) + " do tutorial."
+            );
+        }
+
+        yield return null;
+    }
+}
 }
