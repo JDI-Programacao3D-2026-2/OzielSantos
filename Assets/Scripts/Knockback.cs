@@ -15,6 +15,14 @@ public class Knockback : MonoBehaviour
     [SerializeField] private bool destruirAoMorrer = true;
     private bool morreu = false;
 
+    [Header("Invencibilidade ao renascer")]
+    [SerializeField] private float duracaoInvencibilidade = 3f;
+    [SerializeField] private float intervaloPiscada = 0.15f;
+
+    private bool invencivel = false;
+    private Renderer[] renderizadores;
+    private Coroutine rotinaInvencibilidade;
+
     private Rigidbody rb;
     private NavMeshAgent agente;
     private Coroutine rotinaKnockback;
@@ -23,6 +31,8 @@ public class Knockback : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         agente = GetComponent<NavMeshAgent>();
+
+        renderizadores = GetComponentsInChildren<Renderer>(true);
     }
 
 public void DefinirVidaMaxima(int novaVida)
@@ -30,6 +40,40 @@ public void DefinirVidaMaxima(int novaVida)
     vidaMaxima = novaVida;
     vida = novaVida;
 }
+
+
+IEnumerator InvencibilidadeRespawn()
+{
+    invencivel = true;
+
+    float tempo = 0f;
+    bool visivel = true;
+
+    while (tempo < duracaoInvencibilidade)
+    {
+        visivel = !visivel;
+
+        foreach (Renderer rend in renderizadores)
+        {
+            if (rend != null)
+                rend.enabled = visivel;
+        }
+
+        yield return new WaitForSeconds(intervaloPiscada);
+        tempo += intervaloPiscada;
+    }
+
+    // Garante que o jogador volte a aparecer normalmente.
+    foreach (Renderer rend in renderizadores)
+    {
+        if (rend != null)
+            rend.enabled = true;
+    }
+
+    invencivel = false;
+    rotinaInvencibilidade = null;
+}
+
 
 public void ReceberAtaque(
     int dano,
@@ -40,6 +84,9 @@ public void ReceberAtaque(
 {
     // Impede que projéteis registrem a mesma morte novamente.
     if (morreu)
+        return;
+
+    if (CompareTag("Player") && invencivel)
         return;
 
     vida -= dano;
@@ -258,6 +305,13 @@ void RespawnPlayer()
     }
 
     morreu = false;
+
+    if (rotinaInvencibilidade != null)
+    StopCoroutine(rotinaInvencibilidade);
+
+    rotinaInvencibilidade = StartCoroutine(
+        InvencibilidadeRespawn()
+    );
     Debug.Log("Jogador renasceu na posição inicial!");
 }
 

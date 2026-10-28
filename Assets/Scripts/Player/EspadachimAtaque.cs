@@ -46,7 +46,7 @@ public class EspadachimAtaque : MonoBehaviour
     if (jogador &&
         Mouse.current != null &&
         Mouse.current.leftButton.wasPressedThisFrame &&
-        podeAtacar)
+        podeAtacar && Time.timeScale != 0f)
     {
         StartCoroutine(Atacar());
         gameManager.TutorialAtacar();

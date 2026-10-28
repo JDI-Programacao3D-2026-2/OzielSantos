@@ -41,7 +41,8 @@ public class AtaqueMago : MonoBehaviour
         // Clique esquerdo para atacar.
         if (Mouse.current != null &&
             Mouse.current.leftButton.wasPressedThisFrame &&
-            Time.time >= proximoDisparo)
+            Time.time >= proximoDisparo &&
+            Time.timeScale != 0f)
         {
             Atirar();
             gameManager.TutorialAtacar();

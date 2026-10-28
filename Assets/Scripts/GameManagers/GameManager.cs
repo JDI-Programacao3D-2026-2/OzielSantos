@@ -128,6 +128,9 @@ void ControlarPausa()
     // ESC abre ou fecha o painel.
     if (Keyboard.current.escapeKey.wasPressedThisFrame)
     {
+        if (countdown)
+            return;
+
         if (jogoPausado)
             RetomarJogo();
         else

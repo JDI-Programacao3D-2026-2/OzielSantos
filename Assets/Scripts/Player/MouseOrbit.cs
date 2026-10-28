@@ -10,18 +10,24 @@ public class MouseOrbit : MonoBehaviour
     [FormerlySerializedAs("MouseSensitivity")] public float sensibilidadeMouse = 0.2f;
 
     [Header("Terceira pessoa (ombro)")]
+
     [Tooltip("Altura do ponto que a câmera mira, a partir do pivô do jogador (cabeça/ombros).")]
     public float alturaPivo = 1.6f;
+
     [Tooltip("Distância da câmera atrás do jogador.")]
     public float distanciaCamera = 3f;
+
     [Tooltip("Deslocamento lateral (over-the-shoulder). Positivo = ombro direito, negativo = esquerdo.")]
     public float deslocamentoOmbro = 0.8f;
+
     [Tooltip("Até onde dá pra olhar pra CIMA (graus).")]
     public float anguloOlharCima = 55f;
+
     [Tooltip("Até onde dá pra olhar pra BAIXO (graus).")]
     public float anguloOlharBaixo = 60f;
 
     [Header("Colisão da câmera")]
+
     [Tooltip("Camadas que a câmera não atravessa (paredes, chão). A layer do jogador é ignorada sempre.")]
     public LayerMask camadasColisao = ~0;
     public float raioColisao = 0.25f;

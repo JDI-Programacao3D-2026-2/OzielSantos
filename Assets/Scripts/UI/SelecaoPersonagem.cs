@@ -15,7 +15,7 @@ public class SelecaoPersonagem : MonoBehaviour
     [SerializeField] private GameObject painelPersonagens;
 
     [Header("Cenas")]
-    [SerializeField] private string nomeCenaGameplay = "Gameplay";
+    [SerializeField] private string nomeCenaGameplay = "Game";
     [SerializeField] private string nomeCenaTutorial = "Tutorial";
 
     [Header("Texto do modo escolhido")]
@@ -25,7 +25,7 @@ public class SelecaoPersonagem : MonoBehaviour
     {
         Nenhum,
         Tutorial,
-        Gameplay
+        Normal
     }
 
     private ModoJogo modoEscolhido = ModoJogo.Nenhum;
@@ -52,10 +52,10 @@ public class SelecaoPersonagem : MonoBehaviour
 
     public void EscolherModoGameplay()
     {
-        modoEscolhido = ModoJogo.Gameplay;
+        modoEscolhido = ModoJogo.Normal;
 
         if (textoModo != null)
-            textoModo.text = "Modo Gameplay Normal";
+            textoModo.text = "Modo Normal";
 
         MostrarSelecaoPersonagem();
     }

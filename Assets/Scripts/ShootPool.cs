@@ -136,7 +136,8 @@ private Vector3 CalcularDirecaoTiro()
         if (!isEnemy &&
             Mouse.current != null &&
             Mouse.current.leftButton.isPressed &&
-            Time.time >= nextFireTime)
+            Time.time >= nextFireTime &&
+            Time.timeScale != 0f)
         {
             Shoot();
             gameManager.TutorialAtacar();
@@ -144,7 +145,8 @@ private Vector3 CalcularDirecaoTiro()
         if (Keyboard.current != null &&
         Keyboard.current.rKey.wasPressedThisFrame &&
         !isEnemy &&
-        !IsInvoking(nameof(Reload)))
+        !IsInvoking(nameof(Reload)) &&
+        Time.timeScale != 0f)
     {
         if (currentAmmo < poolSize)
         {

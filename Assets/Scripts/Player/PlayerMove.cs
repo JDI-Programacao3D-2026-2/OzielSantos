@@ -86,6 +86,9 @@ public class PlayerMove : MonoBehaviour
 
         direction = Vector3.zero;
 
+        if (Time.timeScale == 0f)
+            return;
+
         if (Keyboard.current == null)
             return;
 
