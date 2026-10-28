@@ -23,31 +23,24 @@ public class Projectile : MonoBehaviour
         Invoke(nameof(SpawnTime), 5f);
     }
 
-    // Mantém compatibilidade com o ShootPool existente.
+    // Compatibilidade com o ShootPool.
     public void StartProjectile(Vector3 direction, ShootPool shooter)
     {
         this.direction = direction.normalized;
         shootPool = shooter;
 
         veioDoPlayer = shooter != null && !shooter.isEnemy;
-
         retornando = false;
     }
 
-    // Novo método para ataques criados diretamente, como o do Mago.
+    // Para projéteis criados diretamente, como os do Mago.
     public void StartProjectile(Vector3 direction, GameObject atacante)
     {
         this.direction = direction.normalized;
         shootPool = null;
 
-        if (atacante != null)
-        {
-            veioDoPlayer = atacante.CompareTag("Player");
-        }
-        else
-        {
-            veioDoPlayer = false;
-        }
+        veioDoPlayer = atacante != null &&
+                       atacante.CompareTag("Player");
 
         retornando = false;
     }
@@ -60,29 +53,32 @@ public class Projectile : MonoBehaviour
         transform.position += direction * speed * Time.deltaTime;
     }
 
-    void OnCollisionEnter(Collision collision)
+    void OnTriggerEnter(Collider other)
+{
+    if (retornando)
+        return;
+
+    retornando = true;
+    CancelInvoke(nameof(SpawnTime));
+
+    Knockback alvo = other.GetComponentInParent<Knockback>();
+
+    if (alvo != null)
     {
-        if (retornando)
-            return;
+        EnemyNavMesh inimigo =
+            alvo.GetComponent<EnemyNavMesh>();
 
-        retornando = true;
-        CancelInvoke(nameof(SpawnTime));
+        if (inimigo == null)
+            inimigo = alvo.GetComponentInParent<EnemyNavMesh>();
 
-        Knockback alvo =
-            collision.collider.GetComponentInParent<Knockback>();
-
-        if (alvo != null)
-        {
-            alvo.ReceberAtaque(
-                dano,
-                direction,
-                0f,
-                veioDoPlayer
-            );
-        }
-
-        FinalizarProjetil();
+        if (inimigo != null && veioDoPlayer)
+            inimigo.TakeDamage(dano, true);
+        else
+            alvo.ReceberAtaque(dano, direction, 0f, veioDoPlayer);
     }
+
+    FinalizarProjetil();
+}
 
     void SpawnTime()
     {

@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 6362620585373699880}
   - component: {fileID: 1486561066320160222}
   - component: {fileID: 6808913851023459794}
+  - component: {fileID: 8375134876130321401}
   m_Layer: 0
   m_Name: OrbCura
   m_TagString: Untagged
@@ -126,3 +127,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DropCura
   quantidadeCura: 10
+--- !u!114 &8375134876130321401
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8788165809650874991}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0aed6fedbe2022c46afd954e049dec45, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AtracaoOrbe
+  tempoEspera: 0.5
+  velocidadeAtracao: 25
+  distanciaColeta: 0.6

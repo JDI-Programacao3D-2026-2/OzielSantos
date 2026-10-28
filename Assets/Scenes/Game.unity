@@ -1834,7 +1834,7 @@ MonoBehaviour:
   enemySpawner: {fileID: 0}
   gameManager: {fileID: 2070109017}
   textoWave: {fileID: 1794233103}
-  quantidadeMaximaWaves: 5
+  quantidadeMaximaWaves: 2
   tempoEntreWaves: 3
   tempoTextoNaTela: 2
   nomeCenaResultados: Resultados

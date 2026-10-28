@@ -71,6 +71,39 @@ public class EnemyNavMesh : MonoBehaviour
     private int waypointAtual = -1;
     private bool destinoDefinido;
 
+[SerializeField] private float distanciaBuscaNavMesh = 2f;
+[SerializeField] private float diferencaAlturaMaxima = 0.8f;
+
+void RecuperarNavMesh()
+{
+    if (agent == null || !agent.isActiveAndEnabled)
+        return;
+
+    if (agent.isOnNavMesh)
+        return;
+
+    NavMeshHit hit;
+
+    if (NavMesh.SamplePosition(
+        transform.position,
+        out hit,
+        distanciaBuscaNavMesh,
+        agent.areaMask))
+    {
+        // Evita escolher uma calçada muito acima ou abaixo.
+        float diferencaAltura =
+            Mathf.Abs(hit.position.y - transform.position.y);
+
+        if (diferencaAltura > diferencaAlturaMaxima)
+            return;
+
+        if (agent.Warp(hit.position))
+        {
+            agent.isStopped = false;
+        }
+    }
+}
+
 
     void BuscarPlayer()
 {
@@ -136,6 +169,7 @@ public class EnemyNavMesh : MonoBehaviour
     
 void Update()
 {
+    RecuperarNavMesh();
     BuscarPlayer();
 
     if (agent == null)
@@ -151,6 +185,22 @@ if (!agent.enabled || !agent.isOnNavMesh)
         $"Enabled={agent.enabled}, OnNavMesh={agent.isOnNavMesh}"
     );
     return;
+}
+
+if (agent != null && agent.isActiveAndEnabled)
+{
+    if (!agent.isOnNavMesh)
+    {
+        Debug.LogWarning($"{name}: não está sobre o NavMesh!");
+    }
+    else if (agent.isStopped)
+    {
+        Debug.LogWarning($"{name}: NavMesh está pausado!");
+    }
+    else if (!agent.hasPath)
+    {
+        Debug.LogWarning($"{name}: não possui caminho!");
+    }
 }
 
     // A fuga por vida tem prioridade sobre os outros estados.

@@ -13,6 +13,7 @@ public class Knockback : MonoBehaviour
 
     [Header("Configuração")]
     [SerializeField] private bool destruirAoMorrer = true;
+    private bool morreu = false;
 
     private Rigidbody rb;
     private NavMeshAgent agente;
@@ -37,6 +38,10 @@ public void ReceberAtaque(
     bool causadoPeloPlayer
 )
 {
+    // Impede que projéteis registrem a mesma morte novamente.
+    if (morreu)
+        return;
+
     vida -= dano;
 
     Debug.Log($"{name} recebeu {dano} de dano. Vida: {vida}");
@@ -44,10 +49,10 @@ public void ReceberAtaque(
     if (vida <= 0)
     {
         vida = 0;
+        morreu = true;
 
         bool ehJogador = CompareTag("Player");
 
-        // Registra a kill somente se o jogador matou um inimigo.
         if (causadoPeloPlayer && !ehJogador)
         {
             GameManager gm = FindAnyObjectByType<GameManager>();
@@ -97,114 +102,80 @@ public void ReceberAtaque(
 }
 
     
+
 IEnumerator AplicarKnockback(Vector3 direcao, float forca)
 {
     CharacterController controller =
         GetComponent<CharacterController>();
 
-    Rigidbody rb = GetComponent<Rigidbody>();
-    NavMeshAgent agente = GetComponent<NavMeshAgent>();
+    bool agenteEstavaAtivo =
+        agente != null && agente.enabled;
 
-    bool agenteEstavaAtivo = agente != null && agente.enabled;
+    // O knockback será horizontal, sem lançar o inimigo para cima.
+    direcao.y = 0f;
 
-    if (agenteEstavaAtivo)
-    {
-        agente.isStopped = true;
-        agente.enabled = false;
-    }
-
-    // Opção 1: personagem com CharacterController.
-    // Move respeita paredes e colisões.
-    if (controller != null && controller.enabled)
-    {
-        float tempo = 0f;
-
-        while (tempo < duracaoKnockback)
-        {
-            float passo = forca * Time.deltaTime;
-
-            controller.Move(direcao * passo);
-
-            tempo += Time.deltaTime;
-            yield return null;
-        }
-    }
-    // Opção 2: personagem com Rigidbody.
-    // A física impede que atravesse paredes sólidas.
-    else if (rb != null && !rb.isKinematic)
-    {
-        rb.AddForce(direcao * forca, ForceMode.Impulse);
-
-        yield return new WaitForSeconds(duracaoKnockback);
-
-        rb.linearVelocity = new Vector3(
-            0f,
-            rb.linearVelocity.y,
-            0f
-        );
-    }
-    // Opção 3: sem física, usa uma verificação de colisão
-    // antes de cada pequeno deslocamento.
+    if (direcao.sqrMagnitude > 0.001f)
+        direcao.Normalize();
     else
     {
-        float tempo = 0f;
-        float velocidade = forca;
-
-        Collider colisor = GetComponent<Collider>();
-
-        while (tempo < duracaoKnockback)
-        {
-            float passo = velocidade * Time.deltaTime;
-            Vector3 deslocamento = direcao * passo;
-
-            bool bloqueado = false;
-
-            if (colisor != null)
-            {
-                Bounds b = colisor.bounds;
-
-                Vector3 pontoInferior =
-                    new Vector3(b.center.x, b.min.y + 0.05f, b.center.z);
-
-                Vector3 pontoSuperior =
-                    new Vector3(b.center.x, b.max.y - 0.05f, b.center.z);
-
-                float raio = Mathf.Max(
-                    0.05f,
-                    Mathf.Min(b.extents.x, b.extents.z) * 0.8f
-                );
-
-                bloqueado = Physics.CapsuleCast(
-                    pontoInferior,
-                    pontoSuperior,
-                    raio,
-                    direcao,
-                    passo + 0.02f,
-                    Physics.DefaultRaycastLayers,
-                    QueryTriggerInteraction.Ignore
-                );
-            }
-
-            if (!bloqueado)
-                transform.position += deslocamento;
-            else
-                break;
-
-            tempo += Time.deltaTime;
-            yield return null;
-        }
+        rotinaKnockback = null;
+        yield break;
     }
 
-    // Recupera o NavMeshAgent após o knockback.
+    if (agenteEstavaAtivo && agente.isOnNavMesh)
+        agente.isStopped = true;
+
+    // Para evitar conflitos, desativamos temporariamente o agente.
+    if (agenteEstavaAtivo)
+        agente.enabled = false;
+
+    // Interrompe a física que poderia continuar lançando o inimigo.
+    if (rb != null && !rb.isKinematic)
+    {
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+    }
+
+    float tempo = 0f;
+
+    while (tempo < duracaoKnockback)
+    {
+        float passo = forca * Time.deltaTime;
+        Vector3 deslocamento = direcao * passo;
+
+        if (controller != null && controller.enabled)
+        {
+            controller.Move(deslocamento);
+        }
+        else
+        {
+            transform.position += deslocamento;
+        }
+
+        tempo += Time.deltaTime;
+        yield return null;
+    }
+
+    // Limpa qualquer velocidade física residual.
+    if (rb != null && !rb.isKinematic)
+    {
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+    }
+
     if (agenteEstavaAtivo && agente != null)
     {
+        NavMeshHit hit;
+
+        // Busca uma superfície próxima, sem aceitar grandes
+        // diferenças de altura entre a posição atual e o NavMesh.
         if (NavMesh.SamplePosition(
             transform.position,
-            out NavMeshHit hit,
-            5f,
-            NavMesh.AllAreas))
+            out hit,
+            2f,
+            agente.areaMask) &&
+            Mathf.Abs(hit.position.y - transform.position.y) <= 0.8f)
         {
-            agente.enabled = false;
             transform.position = hit.position;
             agente.enabled = true;
 
@@ -215,22 +186,25 @@ IEnumerator AplicarKnockback(Vector3 direcao, float forca)
             }
             else
             {
-                Debug.LogError(
-                    $"{name}: não foi possível reativar o agente no NavMesh."
+                Debug.LogWarning(
+                    $"{name}: agente reativado fora do NavMesh."
                 );
             }
         }
         else
         {
+            // Não teletransporta para outra altura.
+            agente.enabled = true;
+
             Debug.LogWarning(
-                $"{name}: não encontrou NavMesh após o knockback."
+                $"{name}: não encontrou NavMesh próximo e na altura correta."
             );
         }
     }
 
     rotinaKnockback = null;
-
 }
+
 
 void RespawnPlayer()
 {
@@ -283,6 +257,7 @@ void RespawnPlayer()
         }
     }
 
+    morreu = false;
     Debug.Log("Jogador renasceu na posição inicial!");
 }
 

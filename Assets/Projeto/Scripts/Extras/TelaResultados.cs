@@ -19,7 +19,7 @@ public class TelaResultados : MonoBehaviour
         if (textoPontuacao != null)
         {
             textoPontuacao.text =
-                $"Pontuação Final:\n<size=75>{EstatisticasPartida.pontuacao}</size>";
+                $"Pontuação Final:\n<size=100>{EstatisticasPartida.pontuacao}</size>";
         }
 
         if (textoKills != null)

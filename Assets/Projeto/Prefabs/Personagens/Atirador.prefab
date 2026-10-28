@@ -72,7 +72,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 439
+    m_Bits: 951
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 8400000, guid: 3acfa30d4cdae6a439411825ea1c4c0a, type: 2}
   m_TargetDisplay: 0
@@ -404,7 +404,7 @@ MonoBehaviour:
   projetilEspecialPrefab: {fileID: 8788165809650874991, guid: 87cd8ee3fc3bcf74da720e2bf9f85929, type: 3}
   arma: {fileID: 8492880951808174405}
   danoSkill1: 60
-  duracaoMetralhadora: 5
+  duracaoMetralhadora: 2
   multiplicadorIntervaloTiro: 0.4
   arcoFogoPrefab: {fileID: 0}
   pontoDisparoEspadachim: {fileID: 0}
