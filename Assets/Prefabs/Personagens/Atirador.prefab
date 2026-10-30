@@ -382,6 +382,8 @@ MonoBehaviour:
   vidaMaxima: 100
   duracaoKnockback: 0.2
   destruirAoMorrer: 0
+  duracaoInvencibilidade: 3
+  intervaloPiscada: 0.15
 --- !u!114 &6965533516285491249
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1523,7 +1525,7 @@ GameObject:
   - component: {fileID: 4065535010402261468}
   - component: {fileID: 8650728782272232536}
   m_Layer: 3
-  m_Name: Cube
+  m_Name: Vidro
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1577,7 +1579,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: 054e5d8235d638645874112feb35ca29, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

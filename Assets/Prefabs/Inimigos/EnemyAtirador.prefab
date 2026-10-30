@@ -216,7 +216,7 @@ GameObject:
   - component: {fileID: 6149394520917137442}
   - component: {fileID: 8719886643608947622}
   m_Layer: 6
-  m_Name: Cube (1)
+  m_Name: Vidro
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -270,7 +270,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: 054e5d8235d638645874112feb35ca29, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -537,6 +537,8 @@ MonoBehaviour:
   distanciaFuga: 10
   distanciaEscolhaFuga: 8
   currentState: 1
+  distanciaBuscaNavMesh: 2
+  diferencaAlturaMaxima: 0.8
 --- !u!114 &6639222081620569984
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -580,6 +582,8 @@ MonoBehaviour:
   vidaMaxima: 100
   duracaoKnockback: 0.2
   destruirAoMorrer: 1
+  duracaoInvencibilidade: 3
+  intervaloPiscada: 0.15
 --- !u!114 &4172131961330124863
 MonoBehaviour:
   m_ObjectHideFlags: 0
