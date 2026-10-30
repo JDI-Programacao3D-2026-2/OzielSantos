@@ -589,7 +589,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: timer
+  m_text: tutorial
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 024820efe23edff4a94561b6392b36fa, type: 2}
   m_sharedMaterial: {fileID: -5434759368032145096, guid: 024820efe23edff4a94561b6392b36fa, type: 2}
@@ -1943,6 +1943,8 @@ MonoBehaviour:
   playerName: oziel
   playerKills: 0
   playerDeaths: 0
+  textoPontuacao: {fileID: 0}
+  playerScore: 0
   frags: {fileID: 673770850}
   playerNameLabel: {fileID: 752586968}
   playerKillsLabel: {fileID: 2134144492}
